@@ -1,0 +1,84 @@
+name: update-readme
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-readme
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Inject latest release into README
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag=$(gh release view --repo "$REPO" --json tagName -q .tagName)
+          name=$(gh release view --repo "$REPO" --json name -q .name)
+          published=$(gh release view --repo "$REPO" --json publishedAt -q .publishedAt)
+          url=$(gh release view --repo "$REPO" --json url -q .url)
+          body=$(gh release view --repo "$REPO" --json body -q .body | head -c 1500)
+
+          export BLOCK=$(cat <<EOF
+          <!-- LATEST_RELEASE_START -->
+          <!-- This block is auto-updated by .github/workflows/update-readme.yml on every release. -->
+
+          ### Latest release: [\`${tag}\`](${url}) — ${name:-$tag}
+          Published: \`${published}\`
+
+          <details>
+          <summary>Release notes</summary>
+
+          ${body}
+
+          </details>
+
+          <!-- LATEST_RELEASE_END -->
+          EOF
+          )
+
+          python3 - <<'PY'
+          import os, re, pathlib
+          block = os.environ["BLOCK"]
+          p = pathlib.Path("README.md")
+          text = p.read_text()
+          new = re.sub(
+              r"<!-- LATEST_RELEASE_START -->.*?<!-- LATEST_RELEASE_END -->",
+              block,
+              text,
+              flags=re.DOTALL,
+          )
+          if new != text:
+              p.write_text(new)
+              print("README updated")
+          else:
+              print("No change")
+          PY
+        shell: bash
+
+      - name: Commit if changed
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet README.md; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+          git add README.md
+          git commit -m "docs(readme): auto-update for release ${{ github.event.release.tag_name || 'manual' }} [skip ci]"
+          git push origin main

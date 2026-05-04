@@ -1,5 +1,12 @@
 # mouse_ziggler
 
+[![Build](https://github.com/calebohara/mouse_ziggler/actions/workflows/build.yml/badge.svg)](https://github.com/calebohara/mouse_ziggler/actions/workflows/build.yml)
+[![Lint](https://github.com/calebohara/mouse_ziggler/actions/workflows/lint.yml/badge.svg)](https://github.com/calebohara/mouse_ziggler/actions/workflows/lint.yml)
+[![Latest release](https://img.shields.io/github/v/release/calebohara/mouse_ziggler?label=latest%20release&color=brightgreen)](https://github.com/calebohara/mouse_ziggler/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/calebohara/mouse_ziggler/total?color=blue)](https://github.com/calebohara/mouse_ziggler/releases)
+[![Last commit](https://img.shields.io/github/last-commit/calebohara/mouse_ziggler)](https://github.com/calebohara/mouse_ziggler/commits/main)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+
 A serious Windows mouse jiggler that keeps your machine — and your Microsoft Teams presence dot — visibly **green**.
 
 It is more than a power setting. `mouse_ziggler` injects real synthetic input through the Win32 `SendInput` API so the OS-wide idle counter (`GetLastInputInfo`) — the same counter Teams polls — actually resets. It also pins `SetThreadExecutionState` so the screen and system never sleep underneath you.
@@ -15,6 +22,10 @@ Grab the latest signed-release `.exe` from the Releases page:
 **▶ [Download MouseZiggler.exe](https://github.com/calebohara/mouse_ziggler/releases/latest)**
 
 No installer. Double-click, the icon lands in your system tray, right-click it to Start.
+
+<!-- LATEST_RELEASE_START -->
+<!-- This block is auto-updated by .github/workflows/update-readme.yml on every release. -->
+<!-- LATEST_RELEASE_END -->
 
 ---
 
