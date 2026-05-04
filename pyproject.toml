@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mouse-ziggler"
+version = "0.1.0"
+description = "Windows tray mouse jiggler that keeps Microsoft Teams presence green."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Caleb O'Hara", email = "caleb.ohara@gmail.com" }]
+keywords = ["mouse", "jiggler", "teams", "presence", "tray", "windows"]
+classifiers = [
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Environment :: Win32 (MS Windows)",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "pystray>=0.19",
+    "Pillow>=10",
+]
+
+[project.scripts]
+mouse-ziggler = "zig.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/calebohara/mouse_ziggler"
+Source = "https://github.com/calebohara/mouse_ziggler"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["zig*"]

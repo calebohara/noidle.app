@@ -1,0 +1,54 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Generate icon (if not committed)
+        shell: bash
+        run: |
+          if [ ! -f assets/icon.ico ]; then
+            mkdir -p assets
+            python scripts/make_icon.py
+          fi
+
+      - name: Build with PyInstaller
+        run: pyinstaller --onefile --noconsole --name MouseZiggler --icon assets/icon.ico --add-data "assets;assets" src/zig/__main__.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MouseZiggler-windows
+          path: dist/MouseZiggler.exe
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/MouseZiggler.exe
+          generate_release_notes: true
