@@ -130,7 +130,10 @@ jobs:
           Get-Content SHA256SUMS.txt
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@d7d6e113ae9fb1a6c0eb39be73ca7a82dabbf8be   # v3.7.0
+        # Pinned to v3 major; see SECURITY.md HIGH-2 for the action-SHA-
+        # pinning roadmap (applies to every external action in this repo,
+        # not just this one).
+        uses: sigstore/cosign-installer@v3
         with:
           cosign-release: 'v2.4.1'
 
