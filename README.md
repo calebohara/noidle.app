@@ -27,13 +27,13 @@ Double-click, the icon lands in your system tray, right-click it to Start.
 <!-- LATEST_RELEASE_START -->
 <!-- This block is auto-updated by .github/workflows/update-readme.yml on every release. -->
 
-### Latest release: [`v0.1.2`](https://github.com/calebohara/mouse_ziggler/releases/tag/v0.1.2) — v0.1.2
-Published: `2026-05-04T11:47:54Z`
+### Latest release: [`v0.2.0`](https://github.com/calebohara/mouse_ziggler/releases/tag/v0.2.0) — v0.2.0
+Published: `2026-05-04T12:22:07Z`
 
 <details>
 <summary>Release notes</summary>
 
-**Full Changelog**: https://github.com/calebohara/mouse_ziggler/compare/v0.1.1...v0.1.2
+**Full Changelog**: https://github.com/calebohara/mouse_ziggler/compare/v0.1.2...v0.2.0
 
 </details>
 
