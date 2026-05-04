@@ -5,397 +5,772 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>noidle.app — keep your status fresh</title>
   <meta name="description" content="A friendly Windows tray app that quietly keeps your Microsoft Teams presence Available, your screen on, and your machine awake — without nagging you.">
-  <meta name="theme-color" content="#10b981">
-  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="color-scheme" content="dark">
 
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%2310b981' stroke='%23064e3b' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%2322c55e' stroke='%23064e3b' stroke-width='2'/%3E%3C/svg%3E">
 
   <meta property="og:title" content="noidle.app — keep your status fresh">
-  <meta property="og:description" content="Keep your Microsoft Teams presence Available without leaving your laptop awake on a fake screensaver. Tiny, free, MIT, no telemetry.">
+  <meta property="og:description" content="Keep your Microsoft Teams presence green without parking your laptop on a fake screensaver. Tiny, free, MIT, no telemetry.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://noidle.app">
-  <meta property="og:image" content="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 630'%3E%3Cdefs%3E%3CradialGradient id='g' cx='80%25' cy='30%25' r='60%25'%3E%3Cstop offset='0%25' stop-color='%2310b981' stop-opacity='0.35'/%3E%3Cstop offset='100%25' stop-color='%23ffffff' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='630' fill='%23ffffff'/%3E%3Crect width='1200' height='630' fill='url(%23g)'/%3E%3Ccircle cx='960' cy='220' r='120' fill='%2310b981'/%3E%3Ccircle cx='960' cy='220' r='150' fill='none' stroke='%2310b981' stroke-width='4' opacity='0.35'/%3E%3Ctext x='110' y='280' font-family='-apple-system,Segoe UI,sans-serif' font-size='110' font-weight='800' fill='%23064e3b'%3Enoidle.app%3C/text%3E%3Ctext x='110' y='370' font-family='-apple-system,Segoe UI,sans-serif' font-size='44' fill='%2364748b'%3EKeep your status fresh.%3C/text%3E%3Ctext x='110' y='540' font-family='-apple-system,Segoe UI,sans-serif' font-size='28' fill='%2394a3b8'%3EA tiny Windows tray app. MIT. No telemetry.%3C/text%3E%3C/svg%3E">
+  <meta property="og:image" content="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 630'%3E%3Crect width='1200' height='630' fill='%230a0a0f'/%3E%3Cdefs%3E%3CradialGradient id='g' cx='80%25' cy='40%25' r='55%25'%3E%3Cstop offset='0%25' stop-color='%2322c55e' stop-opacity='0.35'/%3E%3Cstop offset='100%25' stop-color='%230a0a0f' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='630' fill='url(%23g)'/%3E%3Ccircle cx='960' cy='250' r='110' fill='%2322c55e'/%3E%3Ctext x='110' y='280' font-family='Inter,sans-serif' font-size='130' font-weight='800' fill='%23ffffff'%3Estay green.%3C/text%3E%3Ctext x='114' y='370' font-family='Inter,sans-serif' font-size='34' fill='%23a3a3aa'%3EnoidIe.app — a friendly Windows tray app%3C/text%3E%3Ctext x='114' y='560' font-family='JetBrains Mono,monospace' font-size='22' fill='%2371717a'%3E$ noidIe.exe&#160;&#160;//&#160;mit&#160;//&#160;no telemetry%3C/text%3E%3C/svg%3E">
   <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+  <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900&family=jetbrains-mono:400,500&display=swap" rel="stylesheet">
 
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     :root {
-      --green-50:  #ecfdf5;
-      --green-100: #d1fae5;
-      --green-400: #34d399;
-      --green-500: #10b981;
-      --green-600: #059669;
-      --green-700: #047857;
-      --green-900: #064e3b;
-      --ink:       #0f172a;
-      --ink-2:     #334155;
-      --muted:     #64748b;
-      --line:      #e2e8f0;
-      --bg:        #ffffff;
-      --bg-soft:   #f8fafc;
-      --bg-tint:   linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
-      --card:      #ffffff;
-      --shadow-sm: 0 1px 2px rgba(15,23,42,0.04);
-      --shadow:    0 1px 3px rgba(15,23,42,0.06), 0 8px 24px rgba(15,23,42,0.06);
-      --shadow-lg: 0 10px 40px rgba(16,185,129,0.18);
-      --radius:    14px;
-      --maxw:      900px;
-      --bodyw:     720px;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --ink:       #f1f5f9;
-        --ink-2:     #cbd5e1;
-        --muted:     #94a3b8;
-        --line:      #1e293b;
-        --bg:        #0b1220;
-        --bg-soft:   #0f172a;
-        --bg-tint:   linear-gradient(180deg, #0b1220 0%, #062018 100%);
-        --card:      #111a2c;
-        --shadow:    0 1px 3px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.25);
-      }
+      --bg: #08080c;
+      --bg-2: #0e0e14;
+      --bg-3: #14141d;
+      --line: #1f1f2c;
+      --line-2: #2a2a3a;
+      --ink: #f5f5f7;
+      --ink-2: #c4c4cc;
+      --ink-3: #8e8e96;
+      --ink-4: #65656e;
+      --green: #22c55e;
+      --green-2: #15803d;
+      --green-glow: rgba(34, 197, 94, 0.45);
+      --orange: #f59e0b;       /* the away dot */
+      --red: #ef4444;
+      --accent: #a7f3d0;
+      --acrylic: rgba(28, 28, 38, 0.72);
+      --maxw: 1100px;
+      --bodyw: 760px;
+      --easing: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    html { -webkit-text-size-adjust: 100%; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      font-size: 16px;
-      line-height: 1.6;
-      color: var(--ink);
+    html, body {
       background: var(--bg);
+      color: var(--ink);
+      margin: 0;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
+      font-feature-settings: "ss01", "cv11";
     }
-    a { color: var(--green-700); text-decoration: none; transition: color 0.15s; }
-    a:hover { color: var(--green-600); text-decoration: underline; }
-    @media (prefers-color-scheme: dark) { a { color: var(--green-400); } }
+    body {
+      background:
+        radial-gradient(ellipse 80% 60% at 80% 20%, rgba(34, 197, 94, 0.10), transparent 70%),
+        radial-gradient(ellipse 60% 70% at 10% 90%, rgba(34, 197, 94, 0.06), transparent 70%),
+        var(--bg);
+      min-height: 100vh;
+    }
+    a { color: var(--ink); text-decoration: none; transition: color 0.15s; }
+    a:hover { color: var(--green); }
 
-    code, kbd { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.88em; }
-    code { background: var(--bg-soft); border: 1px solid var(--line); padding: 0.1em 0.4em; border-radius: 5px; }
+    code, kbd, .mono { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+    code {
+      font-size: 0.86em;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line);
+      padding: 0.1em 0.45em;
+      border-radius: 5px;
+      color: var(--accent);
+    }
     kbd {
-      display: inline-block; padding: 0.15em 0.5em; border-radius: 5px;
-      background: var(--card); border: 1px solid var(--line);
-      box-shadow: 0 1px 0 var(--line); font-size: 0.85em;
+      font-size: 0.78em;
+      display: inline-block;
+      padding: 0.18em 0.55em;
+      border-radius: 5px;
+      background: linear-gradient(180deg, #25252f, #1a1a23);
+      border: 1px solid var(--line-2);
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.04);
+      color: var(--ink-2);
     }
 
-    .wrap     { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
-    .wrap-tight { max-width: var(--bodyw); margin: 0 auto; padding: 0 24px; }
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+    .wrap-tight { max-width: var(--bodyw); margin: 0 auto; padding: 0 28px; }
 
     /* ---------- nav ---------- */
     nav {
-      position: sticky; top: 0; z-index: 10;
-      background: color-mix(in srgb, var(--bg) 88%, transparent);
-      backdrop-filter: saturate(180%) blur(12px);
-      -webkit-backdrop-filter: saturate(180%) blur(12px);
-      border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(8, 8, 12, 0.6);
+      backdrop-filter: saturate(180%) blur(16px);
+      -webkit-backdrop-filter: saturate(180%) blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     }
     .nav-inner {
-      max-width: var(--maxw); margin: 0 auto; padding: 14px 24px;
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 16px 28px;
       display: flex; align-items: center; justify-content: space-between;
     }
     .brand {
       display: flex; align-items: center; gap: 10px;
-      font-weight: 700; font-size: 17px; color: var(--ink);
-      letter-spacing: -0.01em;
+      font-family: "Inter"; font-weight: 700; font-size: 16px;
+      letter-spacing: -0.01em; color: var(--ink);
     }
-    .brand:hover { text-decoration: none; }
+    .brand:hover { color: var(--ink); }
     .brand .dot {
-      width: 12px; height: 12px; border-radius: 50%;
-      background: var(--green-500);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--green-500) 22%, transparent);
+      width: 11px; height: 11px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18), 0 0 12px var(--green-glow);
     }
-    .nav-links { display: flex; gap: 22px; align-items: center; font-size: 14px; }
-    .nav-links a { color: var(--muted); }
-    .nav-links a:hover { color: var(--ink); text-decoration: none; }
-    @media (max-width: 560px) {
+    .nav-links { display: flex; gap: 26px; align-items: center; font-size: 14px; }
+    .nav-links a { color: var(--ink-3); }
+    .nav-links a:hover { color: var(--ink); }
+    .gh {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 13px; border-radius: 8px;
+      border: 1px solid var(--line); background: rgba(255, 255, 255, 0.02);
+    }
+    .gh:hover { background: rgba(255, 255, 255, 0.06); color: var(--ink); }
+    @media (max-width: 600px) {
       .nav-links a:not(.gh) { display: none; }
     }
-    .gh { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); }
-    .gh:hover { background: var(--bg-soft); }
 
     /* ---------- hero ---------- */
     header.hero {
-      background: var(--bg-tint);
-      padding: 64px 0 80px;
-      overflow: hidden;
+      padding: 84px 0 56px;
+      text-align: center;
       position: relative;
-    }
-    .hero-grid {
-      max-width: var(--maxw); margin: 0 auto; padding: 0 24px;
-      display: grid; grid-template-columns: 1.15fr 1fr;
-      gap: 56px; align-items: center;
+      overflow: hidden;
     }
     .hero-pill {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 6px 12px; border-radius: 999px;
-      background: var(--green-50); border: 1px solid var(--green-100);
-      color: var(--green-700);
-      font-size: 13px; font-weight: 500;
-      margin-bottom: 22px;
-    }
-    @media (prefers-color-scheme: dark) {
-      .hero-pill { background: color-mix(in srgb, var(--green-900) 60%, transparent); border-color: var(--green-700); color: var(--green-400); }
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.08);
+      border: 1px solid rgba(34, 197, 94, 0.22);
+      color: #86efac;
+      font-family: "JetBrains Mono"; font-size: 12.5px; font-weight: 500;
+      margin-bottom: 28px;
+      letter-spacing: 0.02em;
     }
     .hero-pill::before {
       content: ""; width: 6px; height: 6px; border-radius: 50%;
-      background: var(--green-500); animation: pulse 2.4s ease-in-out infinite;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green-glow);
+      animation: subtlepulse 2.4s ease-in-out infinite;
+    }
+    @keyframes subtlepulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
     }
     h1 {
-      font-size: clamp(36px, 6vw, 56px);
-      line-height: 1.05; letter-spacing: -0.035em;
-      font-weight: 800; margin: 0 0 18px;
+      font-family: "Inter";
+      font-size: clamp(48px, 8.4vw, 96px);
+      font-weight: 800;
+      line-height: 0.98;
+      letter-spacing: -0.045em;
+      margin: 0 auto 20px;
+      max-width: 900px;
+      color: var(--ink);
     }
-    h1 .accent { color: var(--green-600); }
-    @media (prefers-color-scheme: dark) { h1 .accent { color: var(--green-400); } }
-
+    h1 .stripe {
+      display: inline-block;
+      background: linear-gradient(180deg, var(--green) 0%, #15803d 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      position: relative;
+    }
     .hero-tag {
-      font-size: clamp(17px, 2vw, 19px);
-      color: var(--ink-2);
-      margin: 0 0 32px;
-      max-width: 480px;
+      font-size: clamp(17px, 1.8vw, 19px);
+      color: var(--ink-3);
+      max-width: 580px;
+      margin: 0 auto 36px;
+      line-height: 1.5;
     }
 
+    .cta-row {
+      display: inline-flex; gap: 12px; align-items: center;
+      flex-wrap: wrap; justify-content: center;
+    }
     .cta-primary {
       display: inline-flex; align-items: center; gap: 10px;
-      padding: 14px 22px; border-radius: 12px;
-      background: var(--green-500); color: #fff;
-      font-weight: 600; font-size: 15.5px; letter-spacing: -0.01em;
-      box-shadow: var(--shadow-lg);
-      transition: transform 0.08s ease, box-shadow 0.2s ease, background 0.15s ease;
+      padding: 13px 22px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, var(--green) 0%, #16a34a 100%);
+      color: #052e16;
+      font-weight: 700; font-size: 15px; letter-spacing: -0.005em;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.15) inset,
+        0 0 0 1px rgba(34, 197, 94, 0.5),
+        0 12px 30px -8px rgba(34, 197, 94, 0.5);
+      transition: transform 0.08s ease, box-shadow 0.2s ease, filter 0.15s ease;
     }
     .cta-primary:hover {
-      background: var(--green-600); color: #fff; text-decoration: none;
-      transform: translateY(-1px); box-shadow: 0 14px 50px rgba(16,185,129,0.32);
+      color: #052e16;
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.2) inset,
+        0 0 0 1px rgba(34, 197, 94, 0.7),
+        0 18px 38px -8px rgba(34, 197, 94, 0.6);
     }
     .cta-primary:active { transform: translateY(0); }
-    .cta-primary svg { width: 18px; height: 18px; }
+    .cta-primary svg { width: 17px; height: 17px; }
+    .cta-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 18px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--line);
+      color: var(--ink-2);
+      font-weight: 500; font-size: 15px;
+    }
+    .cta-ghost:hover { color: var(--ink); background: rgba(255, 255, 255, 0.07); border-color: var(--line-2); }
     .cta-meta {
-      display: flex; flex-wrap: wrap; gap: 6px 14px;
-      margin-top: 14px; font-size: 13.5px; color: var(--muted);
+      margin-top: 18px;
+      font-family: "JetBrains Mono";
+      font-size: 12.5px; color: var(--ink-4);
+      letter-spacing: 0;
     }
-    .cta-meta a { color: var(--muted); border-bottom: 1px dashed var(--line); }
-    .cta-meta a:hover { color: var(--green-700); text-decoration: none; border-color: var(--green-500); }
-    .cta-meta .sep { opacity: 0.4; }
+    .cta-meta a { color: var(--ink-3); border-bottom: 1px dashed var(--line-2); }
+    .cta-meta a:hover { color: var(--green); border-color: var(--green); }
+    .cta-meta .sep { opacity: 0.4; margin: 0 8px; }
 
-    /* ---------- hero illustration: pulsing green dot avatar ---------- */
-    .hero-art {
-      position: relative; aspect-ratio: 1 / 1;
-      display: grid; place-items: center;
+    /* ---------- the killer demo: Windows 11 taskbar ---------- */
+    .demo-section { padding: 56px 0 96px; }
+    .demo-prompt {
+      text-align: center;
+      color: var(--ink-3);
+      font-size: 15px;
+      margin-bottom: 28px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
     }
-    .avatar-wrap {
-      position: relative;
-      width: 78%; aspect-ratio: 1 / 1;
+    .demo-prompt .arrow {
+      display: inline-block;
+      animation: bobdown 2s ease-in-out infinite;
     }
-    .avatar {
-      position: relative;
-      width: 100%; height: 100%;
-      border-radius: 50%;
-      background: linear-gradient(140deg, #1e3a8a 0%, #312e81 50%, #1e1b4b 100%);
-      box-shadow:
-        inset 0 -2px 0 rgba(255,255,255,0.06),
-        inset 0 1px 0 rgba(255,255,255,0.08),
-        0 30px 60px rgba(15,23,42,0.22),
-        0 6px 16px rgba(15,23,42,0.12);
-      display: grid; place-items: center;
+    @keyframes bobdown {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(4px); }
+    }
+
+    /* The fake desktop "screen" — gives the taskbar context */
+    .desktop {
+      max-width: 920px; margin: 0 auto;
+      background: linear-gradient(135deg, #1e3a8a 0%, #312e81 50%, #1e1b4b 100%);
+      border-radius: 14px;
+      border: 1px solid var(--line-2);
       overflow: hidden;
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.08) inset,
+        0 30px 80px -20px rgba(0, 0, 0, 0.6),
+        0 10px 30px rgba(0, 0, 0, 0.4);
+      position: relative;
+      aspect-ratio: 16 / 10;
+      display: flex; flex-direction: column;
     }
-    .avatar svg {
-      width: 56%; height: 56%;
-      color: rgba(255,255,255,0.92);
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.18));
+    .desktop-canvas {
+      flex: 1;
+      position: relative;
+      background-image:
+        radial-gradient(ellipse 60% 40% at 70% 30%, rgba(255,255,255,0.10), transparent 60%),
+        radial-gradient(ellipse 40% 30% at 20% 70%, rgba(34, 197, 94, 0.12), transparent 60%);
     }
-    .avatar::before {
-      content: ""; position: absolute; inset: 0;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.18), transparent 55%);
-      pointer-events: none;
+    .desktop-callout {
+      position: absolute;
+      top: 32px; left: 50%; transform: translateX(-50%);
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 13.5px;
+      text-align: center;
+      max-width: 420px;
+      line-height: 1.5;
     }
-    .presence {
-      position: absolute; right: 4%; bottom: 4%;
-      width: 28%; aspect-ratio: 1 / 1;
-      border-radius: 50%;
-      background: var(--green-500);
-      border: 5px solid var(--bg);
-      box-shadow: 0 6px 18px rgba(16,185,129,0.55);
-      z-index: 2;
+    .desktop-callout .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-weight: 500;
+      font-size: 12.5px;
+      margin-top: 10px;
     }
-    .ring {
-      position: absolute; right: 4%; bottom: 4%;
-      width: 28%; aspect-ratio: 1 / 1;
-      border-radius: 50%;
-      border: 3px solid var(--green-500);
-      animation: ring 2.6s ease-out infinite;
-      pointer-events: none;
-      z-index: 1;
+    .desktop-callout .pill .away-dot,
+    .desktop-callout .pill .green-dot {
+      display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+      vertical-align: 1px; margin-right: 6px;
     }
-    @media (prefers-color-scheme: dark) {
-      .avatar { background: linear-gradient(140deg, #1d4ed8 0%, #312e81 50%, #1e1b4b 100%); }
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.55; transform: scale(0.85); }
-    }
-    @keyframes ring {
-      0% { transform: scale(1); opacity: 0.7; }
-      100% { transform: scale(2.1); opacity: 0; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .ring, .hero-pill::before { animation: none !important; }
-    }
+    .desktop-callout .pill .away-dot { background: var(--orange); box-shadow: 0 0 5px var(--orange); }
+    .desktop-callout .pill .green-dot { background: var(--green); box-shadow: 0 0 5px var(--green); }
 
-    @media (max-width: 760px) {
-      .hero-grid { grid-template-columns: 1fr; gap: 36px; text-align: center; }
-      .hero-tag { margin-left: auto; margin-right: auto; }
-      .hero-pill { margin-left: auto; margin-right: auto; }
-      .cta-meta { justify-content: center; }
-      .hero-art { max-width: 280px; margin: 0 auto; }
+    /* Windows 11 taskbar */
+    .taskbar {
+      height: 48px;
+      background: var(--acrylic);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex; align-items: center;
+      padding: 0 12px;
+      position: relative;
+    }
+    .taskbar-icons {
+      display: flex; gap: 6px;
+      flex: 1; justify-content: center;
+    }
+    .taskbar-icon {
+      width: 36px; height: 36px;
+      border-radius: 5px;
+      display: grid; place-items: center;
+      cursor: default;
+      transition: background 0.15s;
+    }
+    .taskbar-icon:hover { background: rgba(255, 255, 255, 0.08); }
+    .taskbar-icon svg { width: 22px; height: 22px; opacity: 0.85; }
+    .taskbar-tray {
+      display: flex; align-items: center; gap: 6px;
+      padding: 0 8px; height: 100%;
+    }
+    .tray-icon {
+      width: 26px; height: 26px;
+      border-radius: 4px;
+      display: grid; place-items: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      position: relative;
+    }
+    .tray-icon:hover { background: rgba(255, 255, 255, 0.08); }
+    .tray-icon.noidle {
+      cursor: pointer;
+    }
+    .tray-icon.noidle .dot {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow:
+        0 0 0 1.5px #052e16,
+        0 0 12px var(--green-glow);
+      transition: transform 0.15s;
+    }
+    .tray-icon.noidle:hover .dot { transform: scale(1.1); }
+    .tray-icon.other .icon-svg { opacity: 0.55; }
+    .tray-clock {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 12px;
+      text-align: right;
+      padding: 0 12px 0 14px;
+      line-height: 1.15;
+      font-family: "Segoe UI", Inter, sans-serif;
+    }
+    .tray-clock .time { font-weight: 400; }
+    .tray-clock .date { font-size: 11px; opacity: 0.85; }
+
+    /* The "right-click here" hint floating above the tray icon */
+    .demo-hint {
+      position: absolute;
+      bottom: 60px; right: 130px;
+      pointer-events: none;
+      font-size: 12.5px;
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(8, 8, 12, 0.85);
+      border: 1px solid rgba(34, 197, 94, 0.45);
+      padding: 7px 12px;
+      border-radius: 8px;
+      transition: opacity 0.4s ease;
+      animation: hintfloat 3s ease-in-out infinite;
+      backdrop-filter: blur(8px);
+    }
+    .demo-hint::after {
+      content: "";
+      position: absolute;
+      bottom: -6px; right: 16px;
+      width: 10px; height: 10px;
+      background: rgba(8, 8, 12, 0.85);
+      border-right: 1px solid rgba(34, 197, 94, 0.45);
+      border-bottom: 1px solid rgba(34, 197, 94, 0.45);
+      transform: rotate(45deg);
+    }
+    @keyframes hintfloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    .demo-hint.hidden { opacity: 0; }
+
+    /* The right-click context menu (the actual product) */
+    .tray-menu {
+      position: absolute;
+      bottom: 56px; right: 14px;
+      width: 280px;
+      background: var(--acrylic);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 10px;
+      padding: 6px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.4);
+      transform-origin: bottom right;
+      transform: scale(0.92) translateY(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s var(--easing), transform 0.18s var(--easing);
+      z-index: 5;
+      font-family: "Segoe UI", Inter, sans-serif;
+      font-size: 13px;
+    }
+    .tray-menu.open {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+    .menu-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 10px;
+      border-radius: 5px;
+      color: var(--ink);
+      cursor: default;
+      position: relative;
+    }
+    .menu-item:hover { background: rgba(255, 255, 255, 0.08); }
+    .menu-item.bold { font-weight: 600; }
+    .menu-item .check {
+      width: 14px; flex: 0 0 14px; color: var(--green);
+      font-size: 14px; line-height: 1;
+    }
+    .menu-item .arrow {
+      margin-left: auto; color: var(--ink-4); font-size: 11px;
+    }
+    .menu-divider {
+      height: 1px;
+      margin: 5px 8px;
+      background: rgba(255, 255, 255, 0.07);
+    }
+    .menu-tooltip {
+      position: absolute;
+      left: calc(100% + 10px); top: 50%; transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.92);
+      color: var(--ink-2);
+      padding: 7px 11px;
+      border-radius: 6px;
+      font-size: 12px;
+      max-width: 220px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      white-space: normal;
+      line-height: 1.4;
+      z-index: 10;
+      border: 1px solid var(--line-2);
+    }
+    .menu-item:hover .menu-tooltip { opacity: 1; transition-delay: 0.4s; }
+
+    @media (max-width: 720px) {
+      .tray-menu { width: 240px; right: 8px; bottom: 52px; }
+      .menu-tooltip { display: none; }
+      .demo-hint { display: none; }
     }
 
     /* ---------- sections ---------- */
-    section { padding: 80px 0; }
-    section.alt { background: var(--bg-soft); }
+    section {
+      padding: 88px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .section-eyebrow {
+      font-family: "JetBrains Mono";
+      font-size: 12px; color: var(--green);
+      text-transform: uppercase; letter-spacing: 0.12em;
+      margin-bottom: 14px;
+      font-weight: 500;
+    }
     section h2 {
-      font-size: clamp(24px, 3vw, 30px);
-      letter-spacing: -0.02em;
-      font-weight: 700;
-      margin: 0 0 12px;
+      font-size: clamp(28px, 4.4vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.05;
+      margin: 0 0 18px;
+      max-width: 700px;
     }
     section .lede {
-      color: var(--ink-2);
-      max-width: 520px;
-      margin: 0 0 36px;
+      color: var(--ink-3);
+      max-width: 580px;
+      font-size: 16.5px;
+      margin: 0 0 48px;
     }
 
-    /* ---------- how it works ---------- */
-    .steps {
+    /* Cycle visualization */
+    .cycle {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
+      gap: 14px;
     }
-    .step {
-      background: var(--card);
+    .cycle-step {
+      background: linear-gradient(180deg, var(--bg-2), var(--bg-3));
       border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 24px;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      border-radius: 14px;
+      padding: 28px 24px 32px;
+      position: relative;
+      overflow: hidden;
     }
-    .step:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: color-mix(in srgb, var(--green-500) 30%, var(--line)); }
-    .step .num {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 28px; height: 28px; border-radius: 8px;
-      background: var(--green-50); color: var(--green-700);
+    .cycle-step::before {
+      content: "";
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(circle at 100% 0%, rgba(34, 197, 94, 0.07), transparent 50%);
+    }
+    .cycle-step .num {
+      font-family: "JetBrains Mono";
+      font-size: 11px; color: var(--green);
+      letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .cycle-step h3 {
+      font-size: 18px; font-weight: 600; letter-spacing: -0.015em;
+      margin: 0 0 8px; color: var(--ink);
+    }
+    .cycle-step p {
+      color: var(--ink-3); margin: 0;
+      font-size: 14.5px; line-height: 1.55;
+    }
+    .cycle-step .visual {
+      margin-bottom: 22px;
+      height: 64px;
+      display: grid; place-items: center;
+    }
+    .cycle-step .visual .pulsedot {
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 0 var(--green-glow);
+      animation: bigpulse 2.4s var(--easing) infinite;
+    }
+    @keyframes bigpulse {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      70% { box-shadow: 0 0 0 22px rgba(34, 197, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+    .cycle-step .visual .moon {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #f5f5f5, #cdcdcd 60%, #9c9c9c);
+      box-shadow: 0 0 22px rgba(255, 255, 255, 0.15);
+    }
+    .cycle-step .visual .check {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1.5px solid var(--green);
+      color: var(--green);
+      display: grid; place-items: center;
+      font-size: 18px;
+    }
+    @media (max-width: 720px) {
+      .cycle { grid-template-columns: 1fr; }
+    }
+
+    /* ---------- update popup mockup ---------- */
+    .popup-section { background: linear-gradient(180deg, transparent, rgba(34, 197, 94, 0.025)); }
+    .popup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.05fr;
+      gap: 56px;
+      align-items: center;
+    }
+    .popup-text h2 { margin-bottom: 18px; }
+    .popup-text p { color: var(--ink-3); margin-bottom: 14px; max-width: 460px; }
+    .popup-text .features {
+      list-style: none; padding: 0; margin: 24px 0 0;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .popup-text .features li {
+      display: flex; gap: 10px; align-items: flex-start;
+      color: var(--ink-2); font-size: 14.5px;
+    }
+    .popup-text .features li::before {
+      content: "✓"; color: var(--green); font-weight: 700; flex: 0 0 14px;
+    }
+
+    /* The faux Tk window */
+    .tk-window {
+      background: #fafafa;
+      border-radius: 8px;
+      box-shadow:
+        0 30px 80px -10px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(0, 0, 0, 0.5),
+        0 1px 0 rgba(255, 255, 255, 0.6) inset;
+      overflow: hidden;
+      color: #1a1a23;
+      font-family: "Segoe UI", Inter, sans-serif;
+    }
+    .tk-titlebar {
+      background: linear-gradient(180deg, #fefefe, #f0f0f0);
+      border-bottom: 1px solid #d4d4d8;
+      padding: 8px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; color: #4a4a52;
+    }
+    .tk-titlebar .controls {
+      display: flex; gap: 8px;
+    }
+    .tk-titlebar .controls span {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #d4d4d8;
+    }
+    .tk-titlebar .controls span:nth-child(3) { background: #ef4444; opacity: 0.8; }
+    .tk-body { padding: 18px 22px 14px; }
+    .tk-body h3 {
+      font-size: 16px; font-weight: 700; margin: 0 0 4px;
+      color: #1a1a23;
+    }
+    .tk-body .subhead {
+      color: #71717a; font-size: 13px; margin: 0 0 18px;
+    }
+    .tk-body .release-bg {
+      background: #f4f4f5;
+      border: 1px solid #e4e4e7;
+      border-radius: 6px;
+      padding: 14px 16px;
+      max-height: 200px; overflow: auto;
+    }
+    .tk-body .release-bg .group {
       font-weight: 700; font-size: 13px;
-      margin-bottom: 14px;
+      color: #1a1a23;
+      margin: 10px 0 4px;
     }
-    @media (prefers-color-scheme: dark) {
-      .step .num { background: color-mix(in srgb, var(--green-900) 70%, transparent); color: var(--green-400); }
+    .tk-body .release-bg .group:first-child { margin-top: 0; }
+    .tk-body .release-bg ul {
+      list-style: none; padding: 0; margin: 0 0 0 4px;
     }
-    .step h3 { margin: 0 0 6px; font-size: 16.5px; letter-spacing: -0.01em; font-weight: 600; }
-    .step p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.55; }
-    @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+    .tk-body .release-bg li {
+      font-size: 13px; color: #3f3f46;
+      padding: 2px 0; line-height: 1.5;
+    }
+    .tk-body .release-bg li::before {
+      content: "•"; color: #22c55e; margin-right: 8px;
+    }
+    .tk-footer {
+      padding: 12px 22px 16px;
+      display: flex; gap: 8px; justify-content: space-between;
+    }
+    .tk-btn {
+      padding: 7px 14px;
+      border-radius: 4px;
+      font-size: 13px; font-family: "Segoe UI", Inter, sans-serif;
+      border: 1px solid #d4d4d8;
+      background: linear-gradient(180deg, #fefefe, #efeff1);
+      color: #18181b; cursor: default;
+    }
+    .tk-btn.primary {
+      background: linear-gradient(180deg, #16a34a, #15803d);
+      color: #fff; border-color: #15803d;
+      font-weight: 600;
+    }
+    @media (max-width: 720px) {
+      .popup-grid { grid-template-columns: 1fr; gap: 32px; }
+    }
 
-    /* ---------- features ---------- */
-    .features {
-      list-style: none; padding: 0; margin: 0;
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
-    }
-    .features li {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      display: flex; align-items: flex-start; gap: 12px;
-    }
-    .features svg { flex: 0 0 22px; width: 22px; height: 22px; color: var(--green-600); margin-top: 2px; }
-    @media (prefers-color-scheme: dark) { .features svg { color: var(--green-400); } }
-    .features b { display: block; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
-    .features span { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
-    @media (max-width: 560px) { .features { grid-template-columns: 1fr; } }
-
-    /* ---------- when to / when not ---------- */
+    /* ---------- limits two-panel ---------- */
     .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .twocol .panel {
-      background: var(--card); border: 1px solid var(--line);
-      border-radius: var(--radius); padding: 22px 24px;
+    .panel {
+      background: linear-gradient(180deg, var(--bg-2), var(--bg-3));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 26px 28px;
     }
-    .twocol .panel.good { border-color: color-mix(in srgb, var(--green-500) 35%, var(--line)); background: linear-gradient(180deg, color-mix(in srgb, var(--green-50) 60%, transparent), var(--card)); }
-    @media (prefers-color-scheme: dark) {
-      .twocol .panel.good { background: linear-gradient(180deg, color-mix(in srgb, var(--green-900) 35%, transparent), var(--card)); }
+    .panel.good { border-color: rgba(34, 197, 94, 0.25); background: linear-gradient(180deg, rgba(34, 197, 94, 0.06), var(--bg-3)); }
+    .panel h3 {
+      font-size: 16px; font-weight: 600; color: var(--ink);
+      margin: 0 0 16px;
+      display: flex; align-items: center; gap: 10px;
     }
-    .twocol h3 { margin: 0 0 12px; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-    .twocol ul { margin: 0; padding-left: 20px; color: var(--ink-2); font-size: 14.5px; }
-    .twocol li { margin-bottom: 6px; }
-    .twocol li:last-child { margin-bottom: 0; }
-    .check { color: var(--green-600); font-weight: 700; }
-    .nope  { color: var(--muted); }
-    @media (max-width: 640px) { .twocol { grid-template-columns: 1fr; } }
+    .panel h3 .badge {
+      font-size: 11px; font-family: "JetBrains Mono"; font-weight: 500;
+      padding: 3px 8px; border-radius: 4px;
+      background: rgba(34, 197, 94, 0.12); color: #86efac;
+      letter-spacing: 0.04em;
+    }
+    .panel.bad h3 .badge { background: rgba(245, 158, 11, 0.12); color: #fcd34d; }
+    .panel ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 14.5px; }
+    .panel li { margin-bottom: 8px; line-height: 1.55; }
+    .panel li:last-child { margin-bottom: 0; }
+    @media (max-width: 720px) { .twocol { grid-template-columns: 1fr; } }
 
     /* ---------- faq ---------- */
     .faq details {
       border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--card);
-      margin-bottom: 12px;
+      border-radius: 12px;
+      background: var(--bg-2);
+      margin-bottom: 10px;
       overflow: hidden;
-      transition: border-color 0.15s ease;
+      transition: border-color 0.18s, background 0.18s;
     }
-    .faq details[open] { border-color: color-mix(in srgb, var(--green-500) 35%, var(--line)); }
+    .faq details:hover { border-color: var(--line-2); }
+    .faq details[open] { border-color: rgba(34, 197, 94, 0.3); background: linear-gradient(180deg, rgba(34, 197, 94, 0.02), var(--bg-2)); }
     .faq summary {
-      cursor: pointer;
-      list-style: none;
+      cursor: pointer; list-style: none;
       padding: 18px 22px;
-      font-weight: 600;
-      font-size: 15.5px;
-      letter-spacing: -0.005em;
-      display: flex; justify-content: space-between; align-items: center; gap: 16px;
+      font-weight: 500; font-size: 15px;
+      color: var(--ink);
+      display: flex; justify-content: space-between; align-items: center; gap: 14px;
     }
     .faq summary::-webkit-details-marker { display: none; }
     .faq summary::after {
-      content: "＋"; color: var(--muted); font-weight: 400; font-size: 18px;
-      transition: transform 0.2s ease;
+      content: "+"; color: var(--ink-3); font-size: 22px; line-height: 1;
+      font-weight: 300;
+      transition: transform 0.2s ease, color 0.18s;
     }
-    .faq details[open] summary::after { transform: rotate(45deg); color: var(--green-600); }
-    .faq .body { padding: 0 22px 20px; color: var(--ink-2); font-size: 14.5px; }
+    .faq details[open] summary::after { transform: rotate(45deg); color: var(--green); }
+    .faq .body {
+      padding: 0 22px 20px;
+      color: var(--ink-3);
+      font-size: 14.5px; line-height: 1.6;
+    }
     .faq .body p { margin: 0 0 10px; }
     .faq .body p:last-child { margin: 0; }
 
     /* ---------- footer ---------- */
     footer {
-      padding: 48px 0 64px;
-      border-top: 1px solid var(--line);
-      background: var(--bg-soft);
-      color: var(--muted);
+      padding: 56px 0 96px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--ink-4);
       font-size: 13.5px;
     }
     .footer-grid {
-      max-width: var(--maxw); margin: 0 auto; padding: 0 24px;
-      display: grid; gap: 28px; grid-template-columns: 1.4fr 1fr 1fr;
-      align-items: start;
+      max-width: var(--maxw); margin: 0 auto; padding: 0 28px;
+      display: grid; grid-template-columns: 1.6fr 1fr 1fr;
+      gap: 36px;
     }
-    .footer-brand { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
-    .footer-brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green-500); }
-    .footer-meta { font-size: 12.5px; }
-    .footer-meta p { margin: 4px 0; }
-    .footer h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); }
+    .footer-brand { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--ink); margin-bottom: 8px; font-size: 14.5px; }
+    .footer-brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green-glow); }
+    .footer h4 { margin: 0 0 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); font-family: "JetBrains Mono"; font-weight: 500; }
     .footer ul { list-style: none; margin: 0; padding: 0; }
-    .footer ul li { margin-bottom: 6px; }
-    .footer ul a { color: var(--muted); }
-    .footer ul a:hover { color: var(--ink); text-decoration: none; }
-    .footer-meta .sha { font-family: ui-monospace, monospace; font-size: 11.5px; opacity: 0.8; word-break: break-all; }
-    @media (max-width: 640px) { .footer-grid { grid-template-columns: 1fr; gap: 22px; } }
-
-    /* ---------- live badges row ---------- */
-    .badges {
-      display: flex; gap: 8px; flex-wrap: wrap;
-      margin-top: 24px;
+    .footer ul li { margin-bottom: 8px; }
+    .footer ul a { color: var(--ink-3); }
+    .footer ul a:hover { color: var(--ink); }
+    .footer-meta p { margin: 0 0 10px; max-width: 360px; }
+    .footer-signed {
+      margin-top: 28px;
+      font-family: "JetBrains Mono"; font-size: 12px;
+      color: var(--ink-4); letter-spacing: 0;
     }
-    .badges img { height: 20px; }
+    .footer-signed .sig {
+      color: var(--ink-3); border-bottom: 1px dashed var(--line-2);
+    }
+    @media (max-width: 720px) { .footer-grid { grid-template-columns: 1fr; gap: 28px; } }
 
-    /* ---------- skip-link a11y ---------- */
+    /* ---------- scroll reveal ---------- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s var(--easing), transform 0.7s var(--easing);
+    }
+    .reveal.in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .hero-pill::before, .demo-hint, .arrow, .pulsedot { animation: none !important; }
+    }
+
+    /* skip link */
     .skip { position: absolute; left: -9999px; }
-    .skip:focus { left: 16px; top: 16px; padding: 8px 12px; background: var(--ink); color: white; border-radius: 6px; z-index: 100; }
+    .skip:focus { left: 16px; top: 16px; padding: 8px 12px; background: var(--green); color: #052e16; border-radius: 6px; z-index: 100; }
   </style>
 </head>
 <body>
@@ -407,11 +782,12 @@
         <span class="dot" aria-hidden="true"></span> noidle.app
       </a>
       <div class="nav-links">
-        <a href="#how">How it works</a>
+        <a href="#try">Try the menu</a>
+        <a href="#updates">Updates</a>
         <a href="#faq">FAQ</a>
         <a class="gh" href="https://github.com/calebohara/noidle.app" aria-label="GitHub repository">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-          GitHub
+          Source
         </a>
       </div>
     </div>
@@ -419,182 +795,316 @@
 
   <main id="main">
     <header class="hero">
-      <div class="hero-grid">
-        <div>
-          <span class="hero-pill">Latest: v0.3.2 · MIT · Windows 10/11</span>
-          <h1>Keep your status<br><span class="accent">fresh.</span></h1>
-          <p class="hero-tag">A friendly little tray app that quietly keeps your Microsoft Teams presence Available — and your machine awake — without leaving you logged in to a fake screensaver.</p>
-
+      <div class="wrap">
+        <span class="hero-pill reveal">v0.3.7 · MIT · Windows 10/11</span>
+        <h1 class="reveal">Stay <span class="stripe">green.</span></h1>
+        <p class="hero-tag reveal">A friendly little tray app that quietly keeps your Microsoft Teams presence Available — and your machine awake — without leaving you parked on a fake screensaver.</p>
+        <div class="cta-row reveal">
           <a class="cta-primary" href="https://github.com/calebohara/noidle.app/releases/latest/download/noidle.exe">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download for Windows
           </a>
-          <div class="cta-meta">
-            <span>~14&nbsp;MB</span>
-            <span class="sep">·</span>
-            <a href="https://github.com/calebohara/noidle.app/releases/latest/download/noidle.msi">Get the MSI installer</a>
-            <span class="sep">·</span>
-            <a href="https://github.com/calebohara/noidle.app#from-source-developers">Build from source</a>
-          </div>
-
-          <div class="badges">
-            <a href="https://github.com/calebohara/noidle.app/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/calebohara/noidle.app?style=flat&color=10b981&labelColor=f8fafc&logo=github&logoColor=64748b"></a>
-            <a href="https://github.com/calebohara/noidle.app/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/calebohara/noidle.app/total?color=10b981&labelColor=f8fafc"></a>
-            <a href="https://github.com/calebohara/noidle.app/actions/workflows/build.yml"><img alt="Build status" src="https://github.com/calebohara/noidle.app/actions/workflows/build.yml/badge.svg"></a>
-          </div>
+          <a class="cta-ghost" href="#try">See the menu&nbsp;↓</a>
         </div>
-
-        <div class="hero-art" aria-hidden="true">
-          <div class="avatar-wrap">
-            <div class="avatar">
-              <svg viewBox="0 0 64 64" fill="currentColor" aria-hidden="true">
-                <circle cx="32" cy="22" r="11"/>
-                <path d="M32 36c-10.5 0-19 6.7-19 15v3a2 2 0 002 2h34a2 2 0 002-2v-3c0-8.3-8.5-15-19-15z"/>
-              </svg>
-            </div>
-            <span class="presence"></span>
-            <span class="ring"></span>
-          </div>
-        </div>
+        <p class="cta-meta reveal">
+          <a href="https://github.com/calebohara/noidle.app/releases/latest/download/noidle.msi">.msi installer</a>
+          <span class="sep">·</span>
+          <a href="https://github.com/calebohara/noidle.app/blob/main/SIGNING.md">verify signature</a>
+          <span class="sep">·</span>
+          ~15 MB
+        </p>
       </div>
     </header>
 
-    <section id="how">
+    <!-- The killer demo: interactive Windows 11 taskbar -->
+    <section id="try" class="demo-section">
       <div class="wrap">
-        <h2>How it works</h2>
-        <p class="lede">Three small, polite things — every minute or so. Nothing visible on screen.</p>
-        <div class="steps">
-          <div class="step">
-            <span class="num">1</span>
-            <h3>Tells Windows you're here</h3>
-            <p>It quietly registers a tiny bit of activity — the same signal Teams checks to decide if you've stepped away.</p>
+        <div class="demo-prompt reveal">
+          <span class="arrow">↓</span> right-click the green dot in the taskbar to see the real menu
+        </div>
+
+        <div class="desktop reveal">
+          <div class="desktop-canvas">
+            <div class="desktop-callout">
+              your Microsoft Teams presence stays
+              <br>
+              <span class="pill"><span class="green-dot"></span>Available</span>
+              &nbsp;instead of
+              <span class="pill"><span class="away-dot"></span>Away</span>
+            </div>
           </div>
-          <div class="step">
-            <span class="num">2</span>
-            <h3>Keeps the screen awake</h3>
-            <p>Pins the display and the system on so you don't lose your work to a sleep timer mid-thought.</p>
-          </div>
-          <div class="step">
-            <span class="num">3</span>
-            <h3>Checks itself</h3>
-            <p>Reads back the same idle counter Teams uses. If something didn't take, it logs it instead of silently lying to you.</p>
+          <div class="taskbar">
+            <!-- left: Start + a few app icons -->
+            <div class="taskbar-icon" style="margin-right: 4px;" title="Start">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="8" height="8" fill="currentColor" stroke="none"/><rect x="13" y="3" width="8" height="8" fill="currentColor" stroke="none"/><rect x="3" y="13" width="8" height="8" fill="currentColor" stroke="none"/><rect x="13" y="13" width="8" height="8" fill="currentColor" stroke="none"/></svg>
+            </div>
+            <div class="taskbar-icons">
+              <div class="taskbar-icon" title="Search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              </div>
+              <div class="taskbar-icon" title="Edge">
+                <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg>
+              </div>
+              <div class="taskbar-icon" title="Teams">
+                <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="6" width="14" height="12" rx="2"/><circle cx="19" cy="10" r="3"/></svg>
+              </div>
+              <div class="taskbar-icon" title="Code">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              </div>
+              <div class="taskbar-icon" title="File Explorer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </div>
+            </div>
+            <div class="taskbar-tray">
+              <div class="tray-icon other" title="Wi-Fi">
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+              </div>
+              <div class="tray-icon other" title="Volume">
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="white"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>
+              </div>
+              <div class="tray-icon noidle" id="noidleTray" title="noidle.app — right-click for menu">
+                <span class="dot"></span>
+              </div>
+            </div>
+            <div class="tray-clock">
+              <div class="time" id="taskbarTime">10:42 AM</div>
+              <div class="date">Mon, May 4</div>
+            </div>
+
+            <!-- The hint that fades after first interaction -->
+            <div class="demo-hint" id="demoHint">right-click here →</div>
+
+            <!-- The actual context menu -->
+            <div class="tray-menu" id="trayMenu" role="menu">
+              <div class="menu-item bold" role="menuitem">
+                <span class="check">▶</span>
+                <span>Pause</span>
+                <div class="menu-tooltip">Toggle the loop. Also bound to <strong>Ctrl+Alt+Z</strong>.</div>
+              </div>
+              <div class="menu-divider"></div>
+              <div class="menu-item" role="menuitem">
+                <span class="check"></span>
+                <span>Interval</span>
+                <span class="arrow">▸</span>
+                <div class="menu-tooltip">15s, 30s, 45s, 60s, 90s, 2m, 5m, 10m, 30m, or any custom value.</div>
+              </div>
+              <div class="menu-item" role="menuitem">
+                <span class="check"></span>
+                <span>Method</span>
+                <span class="arrow">▸</span>
+                <div class="menu-tooltip">Mouse jitter, F15 keypress, or both.</div>
+              </div>
+              <div class="menu-divider"></div>
+              <div class="menu-item" role="menuitem">
+                <span class="check">✓</span>
+                <span>Smart pause when active</span>
+                <div class="menu-tooltip">Skip a tick if you're already typing — no surprise cursor twitches mid-click.</div>
+              </div>
+              <div class="menu-item" role="menuitem">
+                <span class="check">✓</span>
+                <span>Pause during Teams screen share</span>
+                <div class="menu-tooltip">Auto-pauses while Teams is broadcasting, so nothing twitches in front of your audience.</div>
+              </div>
+              <div class="menu-item" role="menuitem">
+                <span class="check"></span>
+                <span>Start with Windows</span>
+                <div class="menu-tooltip">Adds a per-user <code>HKCU\Run</code> entry. No admin needed.</div>
+              </div>
+              <div class="menu-item" role="menuitem">
+                <span class="check">✓</span>
+                <span>Check for updates on launch</span>
+                <div class="menu-tooltip">Pings GitHub Releases — rate-limited to once every 6h.</div>
+              </div>
+              <div class="menu-divider"></div>
+              <div class="menu-item" role="menuitem">
+                <span class="check"></span>
+                <span>Show stats</span>
+              </div>
+              <div class="menu-item" role="menuitem">
+                <span class="check"></span>
+                <span>Open log</span>
+              </div>
+              <div class="menu-item" role="menuitem">
+                <span class="check"></span>
+                <span>Open data folder</span>
+              </div>
+              <div class="menu-divider"></div>
+              <div class="menu-item" role="menuitem" id="quitItem">
+                <span class="check"></span>
+                <span>Quit</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="alt">
-      <div class="wrap">
-        <h2>Polite by default</h2>
-        <p class="lede">Smart enough to know when to stay out of your way.</p>
-        <ul class="features">
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            <div><b>Smart pause</b><span>Skips the nudge when you're already typing.</span></div>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-            <div><b>Screen-share aware</b><span>Pauses while you're presenting in Teams.</span></div>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
-            <div><b>Start with Windows</b><span>One-click toggle. No admin needed.</span></div>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg>
-            <div><b>Global hotkey</b><span><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd> to start or pause from anywhere.</span></div>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-            <div><b>"What's new" updates</b><span>Quiet popup with friendly release notes — never auto-installs.</span></div>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
-            <div><b>Stats &amp; logs</b><span>Uptime, ticks, full log file. Nothing leaves your machine.</span></div>
-          </li>
-        </ul>
-      </div>
-    </section>
-
+    <!-- How it works -->
     <section>
       <div class="wrap">
-        <h2>When to use it</h2>
-        <p class="lede">Honest about where it helps and where it doesn't.</p>
-        <div class="twocol">
-          <div class="panel good">
-            <h3><span class="check">✓</span> Use noidle.app when…</h3>
-            <ul>
-              <li>You're at your desk reading or thinking and don't want Teams to mark you Away.</li>
-              <li>You want your machine to stay awake without changing Windows' power settings forever.</li>
-              <li>You take long phone calls away from the keyboard but stay in front of the laptop.</li>
-              <li>You want the same behaviour on Slack and any app that uses Windows' idle signal.</li>
+        <div class="reveal">
+          <div class="section-eyebrow">How it works</div>
+          <h2>Three small things, every minute or so.</h2>
+          <p class="lede">No visible cursor jumps. No screensaver hacks. No telemetry. Just enough OS-level activity to keep the same idle counter Teams reads from looking fresh.</p>
+        </div>
+
+        <div class="cycle">
+          <div class="cycle-step reveal">
+            <div class="visual"><span class="pulsedot"></span></div>
+            <div class="num">01 · whisper</div>
+            <h3>Tells Windows you're here</h3>
+            <p>A sub-pixel <code>SendInput</code> mouse nudge plus an invisible <kbd>F15</kbd> keypress. Nothing visible on screen. The OS counts both as activity.</p>
+          </div>
+          <div class="cycle-step reveal">
+            <div class="visual"><span class="moon"></span></div>
+            <div class="num">02 · wakelock</div>
+            <h3>Keeps the screen awake</h3>
+            <p>Pins the display and the system on via <code>SetThreadExecutionState</code> so you don't lose your work to a sleep timer mid-thought.</p>
+          </div>
+          <div class="cycle-step reveal">
+            <div class="visual"><span class="check">✓</span></div>
+            <div class="num">03 · self-check</div>
+            <h3>Verifies it took</h3>
+            <p>Reads back the same idle counter Teams checks. If the nudge didn't take, it logs a warning instead of silently lying to you.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The What's New popup mockup -->
+    <section id="updates" class="popup-section">
+      <div class="wrap">
+        <div class="popup-grid">
+          <div class="popup-text reveal">
+            <div class="section-eyebrow">When it's time to update</div>
+            <h2>A friendly popup with what actually changed.</h2>
+            <p>noidle parses the GitHub release notes and shows you a real "What's New" window — categorized into <strong>Added</strong>, <strong>Fixed</strong>, <strong>Changed</strong>. No silent auto-installs. No nagging.</p>
+            <ul class="features">
+              <li>Three explicit choices — Download, Remind me later, Skip this version</li>
+              <li>Skipped versions are remembered as a floor, not an exact match</li>
+              <li>Update checks rate-limited to once every 6 hours</li>
             </ul>
           </div>
-          <div class="panel">
-            <h3><span class="nope">○</span> It can't help when…</h3>
+          <div class="reveal">
+            <div class="tk-window">
+              <div class="tk-titlebar">
+                <span>noidle.app — What's New</span>
+                <div class="controls"><span></span><span></span><span></span></div>
+              </div>
+              <div class="tk-body">
+                <h3>✨ Update available</h3>
+                <p class="subhead">v0.3.7 · you're running v0.3.4</p>
+                <div class="release-bg">
+                  <div class="group">Added</div>
+                  <ul>
+                    <li>Cosign keyless signatures for every release artifact</li>
+                    <li>SHA256SUMS.txt for tamper-evidence verification</li>
+                    <li>Install-mode-aware autostart (MSI vs portable)</li>
+                  </ul>
+                  <div class="group">Fixed</div>
+                  <ul>
+                    <li>Hotkey-error alert no longer silently swallowed by Focus Assist</li>
+                    <li>SHA256SUMS file was empty in v0.3.6</li>
+                  </ul>
+                  <div class="group">Changed</div>
+                  <ul>
+                    <li>Single source of truth for version in zig.__version__</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="tk-footer">
+                <button class="tk-btn">Skip this version</button>
+                <div style="display: flex; gap: 8px;">
+                  <button class="tk-btn">Remind me later</button>
+                  <button class="tk-btn primary">Download</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Honest limits -->
+    <section>
+      <div class="wrap">
+        <div class="reveal">
+          <div class="section-eyebrow">Honest about its limits</div>
+          <h2>When to use it. When it can't help.</h2>
+          <p class="lede">Not every "Away" is something a tray app should fix. Here's the honest split.</p>
+        </div>
+        <div class="twocol">
+          <div class="panel good reveal">
+            <h3>Use noidle when… <span class="badge">good fit</span></h3>
             <ul>
-              <li>Your laptop is locked (Win+L). Teams marks you Away by OS design — no software jiggler can override that.</li>
-              <li>Outlook says you're in a meeting. Calendar status wins.</li>
-              <li>You're on a managed work laptop with corporate monitoring software (CrowdStrike, Sentinel, Teramind, ActivTrak — they detect synthetic input). Don't run noidle.app there without permission.</li>
-              <li>You're on a disconnected Remote Desktop session.</li>
+              <li>You're at your desk reading or thinking and don't want Teams to mark you Away.</li>
+              <li>You take long phone calls in front of your laptop but stepped away from the keyboard.</li>
+              <li>You want your machine to stay awake without changing Windows' power settings forever.</li>
+              <li>You want the same behavior for Slack, Discord, and any app that uses the OS idle signal.</li>
+            </ul>
+          </div>
+          <div class="panel bad reveal">
+            <h3>It can't help when… <span class="badge">honest no</span></h3>
+            <ul>
+              <li><strong>Your laptop is locked</strong> (Win+L). Teams marks you Away regardless of input. By OS design.</li>
+              <li><strong>Outlook says you're in a meeting</strong>. Calendar status takes precedence over presence.</li>
+              <li><strong>You're on a managed work device</strong> with corporate monitoring (CrowdStrike, Sentinel, Teramind, ActivTrak — they detect synthetic input). Don't run noidle there without permission.</li>
+              <li><strong>You're on a disconnected RDP session.</strong></li>
             </ul>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="faq" class="alt">
+    <!-- FAQ -->
+    <section id="faq">
       <div class="wrap-tight">
-        <h2>Questions you'd ask a friend</h2>
-        <p class="lede">If we missed yours, <a href="https://github.com/calebohara/noidle.app/issues">open an issue</a>.</p>
+        <div class="reveal">
+          <div class="section-eyebrow">Questions you'd ask a friend</div>
+          <h2>Honest answers.</h2>
+          <p class="lede">If we missed yours, <a href="https://github.com/calebohara/noidle.app/issues" style="color: var(--green); border-bottom: 1px dashed currentColor;">open an issue</a>.</p>
+        </div>
 
-        <div class="faq">
+        <div class="faq reveal">
           <details>
             <summary>Is this a virus? My antivirus complained.</summary>
             <div class="body">
-              <p>No. The exe is built with PyInstaller (a tool that bundles Python apps into a single file), and Windows Defender SmartScreen flags lots of PyInstaller exes by default — it's a heuristic against the wrapper format, not the contents. The first time you run it you'll see "Windows protected your PC." Click <b>More info → Run anyway</b>.</p>
-              <p>You can verify the file before running it by uploading it to <a href="https://www.virustotal.com">VirusTotal</a>, and the full source is open on <a href="https://github.com/calebohara/noidle.app">GitHub</a>.</p>
+              <p>No. The <code>.exe</code> is built with PyInstaller, and Windows Defender SmartScreen flags lots of PyInstaller exes by default — it's a heuristic against the wrapper format. The first time you run it, click <strong>More info → Run anyway</strong>.</p>
+              <p>You can verify the file before running it: every release ships <code>SHA256SUMS.txt</code> plus cosign keyless signatures. See <a href="https://github.com/calebohara/noidle.app/blob/main/SIGNING.md">SIGNING.md</a>. The full source is open on GitHub.</p>
             </div>
           </details>
           <details>
             <summary>Will my employer be able to tell I'm using it?</summary>
             <div class="body">
-              <p>If your employer runs corporate endpoint monitoring (CrowdStrike, Sentinel, Teramind, ActivTrak, etc.), <b>yes</b> — those tools intentionally hook the Windows input pipeline and flag synthetic input. noidle.app makes no attempt to hide from them.</p>
-              <p>On a personal machine with no monitoring software, no — there's no telemetry, no network calls except the one update check (which you can turn off in the tray menu), and no special API that distinguishes "real" mouse movement from injected.</p>
+              <p>If your employer runs corporate endpoint monitoring (CrowdStrike, Sentinel, Teramind, ActivTrak), <strong>yes</strong> — those tools intentionally hook the Windows input pipeline and flag synthetic input. noidle makes no attempt to hide.</p>
+              <p>On a personal machine with no monitoring, no — there's no telemetry, no network calls except the once-every-6-hours update check (turn-offable in the menu), and no special API that distinguishes "real" mouse input from injected.</p>
             </div>
           </details>
           <details>
             <summary>Does it work with Slack? Discord? Anything besides Teams?</summary>
             <div class="body">
-              <p>Yes — anything that uses Windows' idle signal (which is most desktop apps that show a presence indicator) will see your machine as active. That includes Slack, Discord, the new Teams (WebView2), and most chat clients.</p>
-              <p>It does <b>not</b> influence presence in browser-only tools (e.g. Slack open in a Chrome tab) since browsers track tab visibility, not OS idle. For those, leave the tab focused.</p>
+              <p>Yes — anything that uses Windows' idle signal (most desktop apps with a presence indicator) will see your machine as active. Slack, Discord, the new Teams (WebView2), and most chat clients are covered.</p>
+              <p>It does <strong>not</strong> influence presence in browser-only tools (e.g. Slack open in a Chrome tab) since browsers track tab visibility, not OS idle. For those, leave the tab focused.</p>
             </div>
           </details>
           <details>
             <summary>How is this different from Caffeine / Mouse Jiggler?</summary>
             <div class="body">
-              <p>Caffeine just prevents sleep — it doesn't stop Teams from going Away because it doesn't reset Windows' input idle counter. Old-school mouse jigglers move the cursor visibly, which is annoying mid-click and obvious on a screen-share.</p>
-              <p>noidle.app does both: prevents sleep <b>and</b> resets the idle counter, with a sub-pixel nudge that's invisible, plus auto-pause when you're typing or screen-sharing. And it's free, MIT, and doesn't phone home.</p>
+              <p>Caffeine just prevents sleep — it doesn't reset the input idle counter, so Teams still goes Away. Old-school mouse jigglers move the cursor visibly, which is annoying mid-click and obvious during a screen share.</p>
+              <p>noidle does both: prevents sleep AND resets the idle counter, with a sub-pixel nudge that's invisible, plus auto-pause when you're typing or screen-sharing. Free, MIT, no telemetry.</p>
             </div>
           </details>
           <details>
             <summary>Is it free? What's the catch?</summary>
             <div class="body">
-              <p>Free, MIT-licensed, no telemetry, no upsell. Built as a personal project. The only "catch" is you should not run it on a managed work device without your IT team's blessing.</p>
-            </div>
-          </details>
-          <details>
-            <summary>Does it work on Mac or Linux?</summary>
-            <div class="body">
-              <p>Not yet — it relies on Win32 APIs (<code>SendInput</code>, <code>SetThreadExecutionState</code>, <code>GetLastInputInfo</code>) that don't exist on macOS or Linux. A cross-platform port would be most of a rewrite.</p>
-              <p>On macOS, the built-in <code>caffeinate</code> command in Terminal does a similar job. On Linux, look at <code>caffeine</code> or <code>xdotool</code>.</p>
+              <p>Free, MIT-licensed, no telemetry, no upsell. The only "catch" is — please don't run it on a managed work device without your IT team's blessing.</p>
             </div>
           </details>
           <details>
             <summary>How do I uninstall it?</summary>
             <div class="body">
-              <p>If you used the <b>.msi</b>: Settings → Apps → noidle.app → Uninstall.</p>
-              <p>If you used the portable <b>.exe</b>: right-click the tray icon → Quit, then delete the .exe. To also remove settings: delete <code>%APPDATA%\noidle\</code> and <code>%LOCALAPPDATA%\noidle\</code>. If you toggled "Start with Windows," disable that first so the registry entry is cleaned up.</p>
+              <p>If you used the <strong>.msi</strong>: Settings → Apps → noidle.app → Uninstall.</p>
+              <p>If you used the portable <strong>.exe</strong>: right-click the tray icon → Quit, then delete the .exe. To also remove settings: delete <code>%APPDATA%\noidle\</code> and <code>%LOCALAPPDATA%\noidle\</code>. Disable "Start with Windows" first so the registry entry is cleaned up.</p>
             </div>
           </details>
         </div>
@@ -606,16 +1116,17 @@
     <div class="footer-grid">
       <div class="footer-meta">
         <div class="footer-brand"><span class="dot"></span> noidle.app</div>
-        <p>Open source on GitHub. MIT licensed. No telemetry, no ads, no accounts.</p>
-        <p style="margin-top:14px;">Every release is built and signed by GitHub Actions on a Microsoft-hosted Windows runner. SHA256 checksums are listed on each release page.</p>
+        <p>A tiny, friendly, open-source tray app for Windows. MIT licensed. Built because every other "stay active" tool was either malware-flagged garbage or a $5/month subscription for a hundred lines of Python.</p>
+        <div class="footer-signed">— made with care by <a class="sig" href="https://github.com/calebohara">Caleb O'Hara</a> · <span class="sig">no telemetry, no ads, no accounts</span></div>
       </div>
       <div>
         <h4>Project</h4>
         <ul>
-          <li><a href="https://github.com/calebohara/noidle.app">Source on GitHub</a></li>
+          <li><a href="https://github.com/calebohara/noidle.app">GitHub source</a></li>
           <li><a href="https://github.com/calebohara/noidle.app/releases">All releases</a></li>
+          <li><a href="https://github.com/calebohara/noidle.app/blob/main/SIGNING.md">Verify a release</a></li>
+          <li><a href="https://github.com/calebohara/noidle.app/blob/main/SECURITY.md">Security</a></li>
           <li><a href="https://github.com/calebohara/noidle.app/blob/main/LICENSE">MIT License</a></li>
-          <li><a href="https://github.com/calebohara/noidle.app/issues">Report a bug</a></li>
         </ul>
       </div>
       <div>
@@ -628,5 +1139,72 @@
       </div>
     </div>
   </footer>
+
+  <script>
+    // ----- Live taskbar clock -----
+    (function () {
+      const el = document.getElementById('taskbarTime');
+      if (!el) return;
+      function tick() {
+        const d = new Date();
+        let h = d.getHours();
+        const m = d.getMinutes().toString().padStart(2, '0');
+        const am = h < 12 ? 'AM' : 'PM';
+        h = h % 12; if (h === 0) h = 12;
+        el.textContent = `${h}:${m} ${am}`;
+      }
+      tick();
+      setInterval(tick, 30000);
+    })();
+
+    // ----- Tray icon right-click menu -----
+    (function () {
+      const tray = document.getElementById('noidleTray');
+      const menu = document.getElementById('trayMenu');
+      const hint = document.getElementById('demoHint');
+      const quitItem = document.getElementById('quitItem');
+      if (!tray || !menu) return;
+
+      function openMenu() {
+        menu.classList.add('open');
+        hint && hint.classList.add('hidden');
+      }
+      function closeMenu() {
+        menu.classList.remove('open');
+      }
+      tray.addEventListener('contextmenu', (e) => { e.preventDefault(); openMenu(); });
+      tray.addEventListener('click', (e) => { e.preventDefault(); openMenu(); });
+
+      // Click anywhere outside the menu to close it
+      document.addEventListener('click', (e) => {
+        if (!menu.contains(e.target) && e.target !== tray && !tray.contains(e.target)) {
+          closeMenu();
+        }
+      });
+      // Quit closes the menu (subtle wink to the real product)
+      quitItem && quitItem.addEventListener('click', (e) => { e.stopPropagation(); closeMenu(); });
+      // Escape closes
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMenu();
+      });
+    })();
+
+    // ----- Scroll-driven reveal -----
+    (function () {
+      if (!('IntersectionObserver' in window)) {
+        document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+        return;
+      }
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        }
+      }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+      document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+    })();
+  </script>
 </body>
 </html>
