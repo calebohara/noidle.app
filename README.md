@@ -25,13 +25,13 @@ Double-click. The icon lands in your system tray, right-click it to start.
 <!-- LATEST_RELEASE_START -->
 <!-- This block is auto-updated by .github/workflows/update-readme.yml on every release. -->
 
-### Latest release: [`v0.3.1`](https://github.com/calebohara/noidle.app/releases/tag/v0.3.1) — v0.3.1
-Published: `2026-05-04T12:46:35Z`
+### Latest release: [`v0.3.2`](https://github.com/calebohara/noidle.app/releases/tag/v0.3.2) — v0.3.2
+Published: `2026-05-04T12:59:34Z`
 
 <details>
 <summary>Release notes</summary>
 
-**Full Changelog**: https://github.com/calebohara/noidle.app/compare/v0.3.0...v0.3.1
+**Full Changelog**: https://github.com/calebohara/noidle.app/compare/v0.3.0...v0.3.2
 
 </details>
 
