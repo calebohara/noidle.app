@@ -2,11 +2,11 @@
 
 Uses absolute imports (PyInstaller runs the entry script as a top-level
 module with no parent package, which breaks `from .tray import ...`).
-Adds src/ to sys.path so dev runs (`python mouse_ziggler.py`) work too.
+Adds src/ to sys.path so dev runs (`python noidle.py`) work too.
 
 Wraps startup in a top-level exception handler that writes any crash to
-%LOCALAPPDATA%\\MouseZiggler\\crash.log so users get a debuggable
-artifact instead of a raw "Failed to execute script" Windows dialog.
+%LOCALAPPDATA%\\noidle\\crash.log so users get a debuggable artifact
+instead of a raw "Failed to execute script" Windows dialog.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ if _SRC.is_dir() and str(_SRC) not in sys.path:
 
 def _crash_log_path() -> Path:
     base = Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local")
-    d = base / "MouseZiggler"
+    d = base / "noidle"
     d.mkdir(parents=True, exist_ok=True)
     return d / "crash.log"
 
@@ -41,17 +41,7 @@ def _write_crash(exc: BaseException) -> Path:
 
 
 def _smoke() -> int:
-    """Import + instantiate everything the live app touches, then exit 0.
-
-    Run by CI after PyInstaller builds. Catches:
-      - Relative-import regressions (the v0.1.0 bug)
-      - Constructor signature drift between modules
-      - Missing-symbol regressions
-      - Method-signature mismatches at call sites used in startup code
-      - Newly-added modules failing to import in the bundle
-    Does NOT call into ctypes (Win32) or pystray.run() — those can't be
-    safely exercised in headless CI.
-    """
+    """Import + instantiate everything the live app touches, then exit 0."""
     import zig.activity
     import zig.autostart
     import zig.config
@@ -108,7 +98,7 @@ def main() -> int:
     if "--smoke" in sys.argv:
         return _smoke()
     if "--version" in sys.argv:
-        print("mouse_ziggler 0.2.0", flush=True)
+        print("noidle.app 0.3.0", flush=True)
         return 0
     from zig.tray import run_tray
     run_tray()
@@ -126,8 +116,8 @@ if __name__ == "__main__":
             import ctypes
             ctypes.windll.user32.MessageBoxW(
                 0,
-                f"MouseZiggler crashed.\n\nDetails written to:\n{path}\n\n{exc!r}",
-                "MouseZiggler — crash",
+                f"noidle.app crashed.\n\nDetails written to:\n{path}\n\n{exc!r}",
+                "noidle.app — crash",
                 0x10,
             )
         except Exception:

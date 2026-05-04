@@ -3,14 +3,14 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mouse-ziggler"
-version = "0.1.0"
-description = "Windows tray mouse jiggler that keeps Microsoft Teams presence green."
+name = "noidle-app"
+version = "0.3.0"
+description = "Friendly Windows tray app that keeps your status fresh — no more orange Away dot."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Caleb O'Hara", email = "caleb.ohara@gmail.com" }]
-keywords = ["mouse", "jiggler", "teams", "presence", "tray", "windows"]
+keywords = ["noidle", "presence", "teams", "tray", "windows", "stay-active"]
 classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3",
@@ -25,11 +25,11 @@ dependencies = [
 ]
 
 [project.scripts]
-mouse-ziggler = "zig.__main__:main"
+noidle = "zig.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/calebohara/mouse_ziggler"
-Source = "https://github.com/calebohara/mouse_ziggler"
+Homepage = "https://github.com/calebohara/noidle.app"
+Source = "https://github.com/calebohara/noidle.app"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

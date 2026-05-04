@@ -1,4 +1,4 @@
-# Releasing MouseZiggler
+# Releasing noidle.app
 
 ## Cutting a release
 
@@ -12,9 +12,9 @@
    ```
 
 4. Watch the `build` workflow in GitHub Actions. On a `v*` tag it will:
-   - Build `MouseZiggler.exe` on `windows-latest` with PyInstaller
+   - Build `noidle.exe` on `windows-latest` with PyInstaller
    - Upload the binary as a workflow artifact
-   - Create a GitHub Release and attach `MouseZiggler.exe`
+   - Create a GitHub Release and attach `noidle.exe`
 
 That's the whole flow. No manual upload step.
 

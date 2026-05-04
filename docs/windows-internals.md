@@ -1,6 +1,6 @@
 # Windows Internals Brief: Keeping a Machine "Active"
 
-> Scope: technical reference for `mouse_ziggler`. Goal — keep Windows and user-mode
+> Scope: technical reference for `noidle.app`. Goal — keep Windows and user-mode
 > presence apps (Microsoft Teams, Slack, Outlook, Skype, Discord, Lync legacy) in
 > the "Available" / non-idle state without the user touching the input devices.
 
@@ -169,7 +169,7 @@ References:
 - MSDN: `PowerSetRequest` — <https://learn.microsoft.com/windows/win32/api/powerbase/nf-powerbase-powersetrequest>
 - MSDN: `REASON_CONTEXT` — <https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-reason_context>
 
-Recommendation for `mouse_ziggler` v1: stay on `SetThreadExecutionState`
+Recommendation for `noidle.app` v1: stay on `SetThreadExecutionState`
 because it is one call, no struct marshaling, and we are not targeting
 Modern Standby SKUs. Migrate to `PowerSetRequest` in v2 if/when we want
 the audit trail.
@@ -207,7 +207,7 @@ ACTIVELOCKSCREEN:
 None.
 ```
 
-If `mouse_ziggler.exe` (or `python.exe` while developing) shows up under
+If `noidle.exe` (or `python.exe` while developing) shows up under
 `DISPLAY` and `SYSTEM`, the power request is live. If it does not, either
 the process exited, `ES_CONTINUOUS` was missing, or another `STES` call
 cleared it. `powercfg /requestsoverride` lets us pin a request for a
@@ -275,7 +275,7 @@ required for `powercfg /requests` (to see other processes' requests) and
 for `powercfg /requestsoverride`. UIPI will block `SendInput` from a
 medium-IL process targeting a high-IL foreground window — but since we
 are not targeting a window, just the global input queue, this does not
-apply. Run `mouse_ziggler` un-elevated.
+apply. Run `noidle.app` un-elevated.
 
 ### 7e. Multiple monitors / DPI
 `MOUSEEVENTF_MOVE` relative is in mickeys (raw mouse units), unaffected
@@ -287,7 +287,7 @@ exclusively — none of this matters.
 ### 7f. Anti-cheat / EDR detection
 Some EDR products (CrowdStrike Falcon, SentinelOne) flag synthetic input
 injection from non-whitelisted binaries. `SendInput` from `python.exe` is
-common enough to usually pass; a packed standalone `mouse_ziggler.exe`
+common enough to usually pass; a packed standalone `noidle.exe`
 may earn a closer look. Sign the binary if shipping to managed fleets.
 
 ---

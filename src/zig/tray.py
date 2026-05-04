@@ -96,7 +96,7 @@ class TrayApp:
         self._hotkey: HotkeyListener | None = None
 
         self._icon = pystray.Icon(
-            "mouse_ziggler",
+            "noidle",
             icon=_make_icon(_PAUSED_RGB),
             title=self._tooltip(self.jiggler.state),
             menu=self._build_menu(),
@@ -209,7 +209,7 @@ class TrayApp:
                 self.config.autostart = True
             self._save()
         except RuntimeError as e:
-            self._icon.notify(str(e), "mouse_ziggler")
+            self._icon.notify(str(e), "noidle")
         self._refresh()
 
     def _toggle_update_check(self, _icon, _item) -> None:
@@ -220,20 +220,20 @@ class TrayApp:
     # ---- actions -------------------------------------------------------- #
 
     def _show_stats(self, _icon, _item) -> None:
-        self._icon.notify(self.stats.summary(), "mouse_ziggler")
+        self._icon.notify(self.stats.summary(), "noidle")
 
     def _show_idle(self, _icon, _item) -> None:
         try:
             idle = get_idle_seconds()
         except Exception:
             idle = -1.0
-        self._icon.notify(f"Idle: {idle:.1f}s", "mouse_ziggler")
+        self._icon.notify(f"Idle: {idle:.1f}s", "noidle")
 
     def _show_autostart_target(self, _icon, _item) -> None:
         try:
-            self._icon.notify(autostart_target(), "mouse_ziggler")
+            self._icon.notify(autostart_target(), "noidle")
         except RuntimeError as e:
-            self._icon.notify(str(e), "mouse_ziggler")
+            self._icon.notify(str(e), "noidle")
 
     def _open_log(self, _icon, _item) -> None:
         try:
@@ -254,19 +254,19 @@ class TrayApp:
         info = check_for_update()
         if info is None:
             if manual:
-                self._icon.notify("Update check failed (offline?)", "mouse_ziggler")
+                self._icon.notify("Update check failed (offline?)", "noidle")
             return
         if info.is_newer:
             self._icon.notify(
                 f"Update available: v{info.latest} (you have v{info.current})\nClick tray icon menu → download",
-                "mouse_ziggler",
+                "noidle",
             )
             try:
                 webbrowser.open(info.url)
             except Exception:
                 pass
         elif manual:
-            self._icon.notify(f"Up to date (v{info.current})", "mouse_ziggler")
+            self._icon.notify(f"Up to date (v{info.current})", "noidle")
 
     def _quit(self, _icon, _item) -> None:
         try:
@@ -303,7 +303,7 @@ class TrayApp:
     def _tooltip(self, st: JigglerState) -> str:
         status = "running" if st.running else "paused"
         return (
-            f"mouse_ziggler — {status}\n"
+            f"noidle.app — {status}\n"
             f"method: {self.jiggler.method}  every {self.jiggler.interval_seconds:.0f}s\n"
             f"last jiggle: {_format_last(st.last_jiggle_at)}"
         )
@@ -331,7 +331,7 @@ class TrayApp:
 
 def run_tray() -> None:
     log_path = setup_file_logging()
-    log.info("mouse_ziggler tray starting (log=%s, data=%s)", log_path, log_dir())
+    log.info("noidle.app tray starting (log=%s, data=%s)", log_path, log_dir())
 
     cfg = load_config()
     jiggler = Jiggler(

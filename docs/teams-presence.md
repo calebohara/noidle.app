@@ -1,4 +1,4 @@
-# Microsoft Teams Presence: Technical Brief for `mouse_ziggler`
+# Microsoft Teams Presence: Technical Brief for `noidle.app`
 
 Authoritative source: [Microsoft Learn — User presence in Teams](https://learn.microsoft.com/en-us/microsoftteams/presence-admins) (last updated Feb 2026).
 

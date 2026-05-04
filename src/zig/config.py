@@ -9,7 +9,7 @@ from pathlib import Path
 
 log = logging.getLogger("zig.config")
 
-_APP_DIR_NAME = "MouseZiggler"
+_APP_DIR_NAME = "noidle"
 _CONFIG_FILENAME = "config.json"
 _VALID_METHODS = ("mouse", "key", "both")
 _MIN_INTERVAL_S = 1.0

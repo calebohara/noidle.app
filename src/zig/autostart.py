@@ -9,7 +9,7 @@ except ImportError:
     winreg = None  # type: ignore[assignment]
 
 _RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
-_VALUE_NAME = "MouseZiggler"
+_VALUE_NAME = "noidle"
 
 
 def _require_windows() -> None:
@@ -28,7 +28,7 @@ def _frozen() -> bool:
 def _launcher_script() -> str:
     pkg_dir = os.path.dirname(os.path.abspath(__file__))
     repo_root = os.path.abspath(os.path.join(pkg_dir, "..", ".."))
-    return os.path.join(repo_root, "mouse_ziggler.py")
+    return os.path.join(repo_root, "noidle.py")
 
 
 def current_target() -> str:
@@ -80,9 +80,9 @@ def disable() -> None:
 #         try:
 #             (disable if is_enabled() else enable)()
 #         except RuntimeError as e:
-#             self._icon.notify(str(e), "mouse_ziggler")
+#             self._icon.notify(str(e), "noidle")
 #         self._refresh()
 #     def _show_autostart_target(self, _icon, _item):
-#         self._icon.notify(current_target(), "mouse_ziggler")
+#         self._icon.notify(current_target(), "noidle")
 # Wrap is_enabled() in a `_safe_is_enabled` helper that returns False on RuntimeError
 # so the menu still renders during macOS dev runs.

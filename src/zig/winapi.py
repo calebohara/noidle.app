@@ -1,5 +1,5 @@
 """
-mouse_ziggler.winapi
+noidle (zig.winapi)
 ====================
 
 Thin ctypes wrapper around the Win32 surface required to keep a Windows
@@ -19,7 +19,7 @@ This module is import-safe on non-Windows platforms (it raises only when a
 function is actually called), so the rest of the project can be linted and
 unit-tested on macOS / Linux dev machines.
 
-No production logic beyond this module — `mouse_ziggler` policy code lives
+No production logic beyond this module — `noidle.app` policy code lives
 elsewhere.
 """
 
@@ -49,7 +49,7 @@ _IS_WINDOWS = sys.platform.startswith("win")
 def _require_windows() -> None:
     if not _IS_WINDOWS:
         raise RuntimeError(
-            "mouse_ziggler.winapi only operates on Windows; "
+            "noidle (zig.winapi) only operates on Windows; "
             f"current platform is {sys.platform!r}"
         )
 
@@ -303,7 +303,7 @@ def get_idle_seconds() -> float:
 
 
 # --------------------------------------------------------------------------- #
-# Smoke test (manual): `python -m mouse_ziggler.winapi`
+# Smoke test (manual): `python -m zig.winapi`
 # --------------------------------------------------------------------------- #
 
 if __name__ == "__main__":  # pragma: no cover

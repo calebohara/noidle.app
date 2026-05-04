@@ -1,6 +1,6 @@
 """
-mouse_ziggler.activity
-======================
+noidle.activity
+===============
 
 Activity-aware policy helpers used by the jiggler engine to decide whether a
 scheduled tick should be skipped:

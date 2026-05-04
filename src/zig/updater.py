@@ -7,9 +7,9 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Optional
 
-CURRENT_VERSION = "0.2.0"
+CURRENT_VERSION = "0.3.0"
 
-_RELEASES_URL = "https://api.github.com/repos/calebohara/mouse_ziggler/releases/latest"
+_RELEASES_URL = "https://api.github.com/repos/calebohara/noidle.app/releases/latest"
 
 log = logging.getLogger("zig.updater")
 
@@ -54,7 +54,7 @@ def check_for_update(timeout: float = 5.0) -> Optional[UpdateInfo]:
     req = urllib.request.Request(
         _RELEASES_URL,
         headers={
-            "User-Agent": f"MouseZiggler/{CURRENT_VERSION}",
+            "User-Agent": f"noidle.app/{CURRENT_VERSION}",
             "Accept": "application/vnd.github+json",
         },
     )

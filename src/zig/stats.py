@@ -76,7 +76,7 @@ class Stats:
 #   on every successful injection and stats.record_skip("active") /
 #   stats.record_skip("screenshare") whenever the policy decides to skip.
 #   Add a "Show stats" menu item to the pystray Menu whose handler does
-#   icon.notify(self.stats.summary(), title="MouseZiggler"). On quit,
+#   icon.notify(self.stats.summary(), title="noidle"). On quit,
 #   call self.stats.stopped() before icon.stop() so a final summary read
 #   shows "Uptime: stopped". Stats is internally locked, so the tray
 #   thread, jiggler thread, and hotkey thread can all touch it safely.

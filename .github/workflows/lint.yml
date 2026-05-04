@@ -33,4 +33,4 @@ jobs:
         # get_last_error) resolve from typeshed instead of being flagged
         # missing on the Linux runner. --ignore-missing-imports for pystray
         # which ships no py.typed marker.
-        run: mypy --platform win32 --ignore-missing-imports src mouse_ziggler.py
+        run: mypy --platform win32 --ignore-missing-imports src noidle.py

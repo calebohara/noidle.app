@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package
-      Name="MouseZiggler"
-      Manufacturer="MouseZiggler"
+      Name="noidle.app"
+      Manufacturer="noidle.app"
       Version="$(var.Version)"
       UpgradeCode="6f2c4d1e-3a7b-4e9d-9c1b-7a8d2e6f4b10"
       Scope="perUser"
@@ -14,20 +14,20 @@
 
     <StandardDirectory Id="LocalAppDataFolder">
       <Directory Id="ProgramsFolder" Name="Programs">
-        <Directory Id="INSTALLFOLDER" Name="MouseZiggler" />
+        <Directory Id="INSTALLFOLDER" Name="noidle" />
       </Directory>
     </StandardDirectory>
 
     <StandardDirectory Id="ProgramMenuFolder">
-      <Directory Id="ApplicationProgramsFolder" Name="MouseZiggler" />
+      <Directory Id="ApplicationProgramsFolder" Name="noidle.app" />
     </StandardDirectory>
 
     <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="2bd1f1a7-91f2-4f3c-9c0a-1d3e7c5b6a40">
-      <File Id="MouseZigglerExe"
-            Source="dist/MouseZiggler.exe"
+      <File Id="NoidleExe"
+            Source="dist/noidle.exe"
             KeyPath="yes" />
       <RegistryValue Root="HKCU"
-                     Key="Software\MouseZiggler"
+                     Key="Software\noidle"
                      Name="installed"
                      Type="integer"
                      Value="1" />
@@ -35,21 +35,21 @@
     </Component>
 
     <Component Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Guid="9f6e8a44-2b1c-4f87-bb3d-5a8c0e9d1c22">
-      <Shortcut Id="MouseZigglerShortcut"
-                Name="MouseZiggler"
-                Description="Keep your machine awake"
-                Target="[INSTALLFOLDER]MouseZiggler.exe"
+      <Shortcut Id="NoidleShortcut"
+                Name="noidle.app"
+                Description="Stay active. Stay available."
+                Target="[INSTALLFOLDER]noidle.exe"
                 WorkingDirectory="INSTALLFOLDER" />
       <RemoveFolder Id="RemoveStartMenuFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
       <RegistryValue Root="HKCU"
-                     Key="Software\MouseZiggler"
+                     Key="Software\noidle"
                      Name="shortcut"
                      Type="integer"
                      Value="1"
                      KeyPath="yes" />
     </Component>
 
-    <Feature Id="Main" Title="MouseZiggler" Level="1">
+    <Feature Id="Main" Title="noidle.app" Level="1">
       <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="StartMenuShortcut" />
     </Feature>

@@ -38,17 +38,17 @@ jobs:
           fi
 
       - name: Build with PyInstaller
-        run: pyinstaller --onefile --noconsole --name MouseZiggler --icon assets/icon.ico --add-data "assets;assets" --paths src --hidden-import zig --hidden-import zig.tray --hidden-import zig.jiggler --hidden-import zig.winapi --hidden-import zig.activity --hidden-import zig.autostart --hidden-import zig.config --hidden-import zig.hotkey --hidden-import zig.logging_setup --hidden-import zig.stats --hidden-import zig.updater mouse_ziggler.py
+        run: pyinstaller --onefile --noconsole --name noidle --icon assets/icon.ico --add-data "assets;assets" --paths src --hidden-import zig --hidden-import zig.tray --hidden-import zig.jiggler --hidden-import zig.winapi --hidden-import zig.activity --hidden-import zig.autostart --hidden-import zig.config --hidden-import zig.hotkey --hidden-import zig.logging_setup --hidden-import zig.stats --hidden-import zig.updater noidle.py
 
       - name: Smoke-test built .exe (--smoke imports everything and exits 0)
         shell: pwsh
         run: |
-          $exe = "dist/MouseZiggler.exe"
+          $exe = "dist/noidle.exe"
           if (-not (Test-Path $exe)) { Write-Error "Build produced no exe"; exit 1 }
           $p = Start-Process -FilePath $exe -ArgumentList "--smoke" -Wait -PassThru -NoNewWindow
           Write-Host "Exit code: $($p.ExitCode)"
           if ($p.ExitCode -ne 0) {
-            Write-Error "MouseZiggler.exe --smoke failed with exit $($p.ExitCode) — startup imports broke. Refusing to publish."
+            Write-Error "noidle.exe --smoke failed with exit $($p.ExitCode) — startup imports broke. Refusing to publish."
             exit 1
           }
 
@@ -75,19 +75,19 @@ jobs:
         run: |
           $version = "${{ steps.msi_version.outputs.version }}"
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          wix build installer/MouseZiggler.wxs -arch x64 -out dist/MouseZiggler.msi -d Version=$version
-          if (-not (Test-Path "dist/MouseZiggler.msi")) {
-            Write-Error "WiX did not produce dist/MouseZiggler.msi"
+          wix build installer/noidle.wxs -arch x64 -out dist/noidle.msi -d Version=$version
+          if (-not (Test-Path "dist/noidle.msi")) {
+            Write-Error "WiX did not produce dist/noidle.msi"
             exit 1
           }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MouseZiggler-windows
+          name: noidle-windows
           path: |
-            dist/MouseZiggler.exe
-            dist/MouseZiggler.msi
+            dist/noidle.exe
+            dist/noidle.msi
           if-no-files-found: error
 
       - name: Create GitHub Release
@@ -95,8 +95,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/MouseZiggler.exe
-            dist/MouseZiggler.msi
+            dist/noidle.exe
+            dist/noidle.msi
           generate_release_notes: true
 
       - name: Trigger README auto-update

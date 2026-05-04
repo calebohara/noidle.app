@@ -16,8 +16,8 @@ def log_dir() -> Path:
     if sys.platform == "win32":
         base = os.environ.get("LOCALAPPDATA")
         if base:
-            return Path(base) / "MouseZiggler"
-    return Path.home() / ".local" / "state" / "MouseZiggler"
+            return Path(base) / "noidle"
+    return Path.home() / ".local" / "state" / "noidle"
 
 
 def _log_path() -> Path:
