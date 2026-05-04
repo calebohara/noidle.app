@@ -40,6 +40,15 @@ class Stats:
         with self._lock:
             self.started_at = None
 
+    def reset(self) -> None:
+        with self._lock:
+            self.tick_count = 0
+            self.skipped_active = 0
+            self.skipped_screenshare = 0
+            self.last_idle_seconds = None
+            if self.started_at is not None:
+                self.started_at = time.monotonic()
+
     def summary(self) -> str:
         with self._lock:
             uptime = self._format_uptime(self.started_at)

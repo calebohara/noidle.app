@@ -89,8 +89,12 @@ def parse_release_notes(markdown: str) -> _ParsedNotes:
     return _ParsedNotes(sections=sections, other=other)
 
 
+_MAX_LINE_LEN = 200
+
+
 def _classify(line: str) -> str | None:
     head = line.split(":", 1)[0].strip().lower()
+    head = head.rstrip("!")  # conventional-commit breaking-change marker (e.g. "feat!:")
     head = re.sub(r"\(.*\)$", "", head).strip()  # strip "feat(scope)"
     for label, prefixes in _CATEGORIES:
         if head in prefixes:
@@ -99,8 +103,13 @@ def _classify(line: str) -> str | None:
 
 
 def _strip_prefix(line: str) -> str:
-    """Strip 'feat: ', 'fix(scope): ' etc. — bucket already conveys type."""
-    return re.sub(r"^[a-zA-Z]+(\([^)]*\))?\s*:\s*", "", line).strip()
+    """Strip 'feat: ', 'fix(scope): ', 'feat!: ' — bucket already conveys type.
+    Truncate ridiculously long lines so the window stays tidy.
+    """
+    cleaned = re.sub(r"^[a-zA-Z]+(\([^)]*\))?!?\s*:\s*", "", line).strip()
+    if len(cleaned) > _MAX_LINE_LEN:
+        cleaned = cleaned[: _MAX_LINE_LEN - 1].rstrip() + "…"
+    return cleaned
 
 
 def show_whats_new(

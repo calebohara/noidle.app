@@ -42,6 +42,8 @@ _INTERVAL_PRESETS: list[tuple[str, float]] = [
     ("90 seconds", 90),
     ("2 minutes", 120),
     ("5 minutes", 300),
+    ("10 minutes", 600),
+    ("30 minutes", 1800),
 ]
 
 _METHOD_PRESETS: list[tuple[str, Method]] = [
@@ -138,6 +140,7 @@ class TrayApp:
                      checked=lambda _i: self.config.check_for_updates),
             Menu.SEPARATOR,
             MenuItem("Show stats", self._show_stats),
+            MenuItem("Reset stats", self._reset_stats),
             MenuItem("Show idle time", self._show_idle),
             MenuItem("Check for updates now", self._manual_update_check),
             MenuItem("Preview update dialog", self._preview_whats_new),
@@ -223,6 +226,10 @@ class TrayApp:
 
     def _show_stats(self, _icon, _item) -> None:
         self._icon.notify(self.stats.summary(), "noidle")
+
+    def _reset_stats(self, _icon, _item) -> None:
+        self.stats.reset()
+        self._icon.notify("Stats reset.", "noidle")
 
     def _show_idle(self, _icon, _item) -> None:
         try:

@@ -7,7 +7,7 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Optional
 
-CURRENT_VERSION = "0.3.1"
+CURRENT_VERSION = "0.3.2"
 
 _RELEASES_URL = "https://api.github.com/repos/calebohara/noidle.app/releases/latest"
 
