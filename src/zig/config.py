@@ -4,10 +4,17 @@ import json
 import logging
 import os
 import sys
+import threading
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
 log = logging.getLogger("zig.config")
+
+# Process-wide lock for save(). Multiple threads (tray menu callbacks +
+# the What's New worker writing skipped_version) can race in here; without
+# a lock the JSON on disk can be a half-merged mix of two threads' Config
+# snapshots.
+_save_lock = threading.Lock()
 
 _APP_DIR_NAME = "noidle"
 _CONFIG_FILENAME = "config.json"
@@ -26,7 +33,13 @@ class Config:
     autostart: bool = False
     check_for_updates: bool = True
     hotkey: str = "ctrl+alt+z"
+    # skipped_version is a *floor*: when CURRENT_VERSION >= skipped_version,
+    # the skip is auto-cleared so the user is re-prompted on the next jump.
+    # Stored as a dotted string ("0.4.0"); empty means "no skip in effect".
     skipped_version: str = ""
+    # Update-check rate limiting (UTC unix timestamps, 0 = never).
+    last_update_check_at: float = 0.0
+    last_update_check_failed: bool = False
 
 
 def config_dir() -> Path:
@@ -88,16 +101,22 @@ def load() -> Config:
 
 
 def save(config: Config) -> None:
-    path = config_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    data = json.dumps(asdict(config), indent=2, sort_keys=True)
-    with tmp.open("w", encoding="utf-8") as f:
-        f.write(data)
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp, path)
-    log.debug("config saved to %s", path)
+    """Atomic, lock-protected save. Multiple threads (tray menu callbacks +
+    What's New worker writing skipped_version) call this concurrently; the
+    process-wide _save_lock ensures the on-disk JSON is never a half-merged
+    interleave of two snapshots.
+    """
+    with _save_lock:
+        path = config_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        data = json.dumps(asdict(config), indent=2, sort_keys=True)
+        with tmp.open("w", encoding="utf-8") as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+        log.debug("config saved to %s", path)
 
 
 # INTEGRATION: tray.py / __main__.py / jiggler.py wiring for v0.2.0

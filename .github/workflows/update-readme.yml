@@ -27,38 +27,52 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          tag=$(gh release view --repo "$REPO" --json tagName -q .tagName)
-          name=$(gh release view --repo "$REPO" --json name -q .name)
-          published=$(gh release view --repo "$REPO" --json publishedAt -q .publishedAt)
-          url=$(gh release view --repo "$REPO" --json url -q .url)
-          body=$(gh release view --repo "$REPO" --json body -q .body | head -c 1500)
-
-          export BLOCK=$(cat <<EOF
-          <!-- LATEST_RELEASE_START -->
-          <!-- This block is auto-updated by .github/workflows/update-readme.yml on every release. -->
-
-          ### Latest release: [\`${tag}\`](${url}) — ${name:-$tag}
-          Published: \`${published}\`
-
-          <details>
-          <summary>Release notes</summary>
-
-          ${body}
-
-          </details>
-
-          <!-- LATEST_RELEASE_END -->
-          EOF
-          )
+          # Fetch metadata into env vars (NEVER interpolate the body into a
+          # shell heredoc — a release body containing $(curl ...) would
+          # execute on the runner). Python reads everything via os.environ.
+          export TAG=$(gh release view --repo "$REPO" --json tagName -q .tagName)
+          export NAME=$(gh release view --repo "$REPO" --json name -q .name)
+          export PUBLISHED=$(gh release view --repo "$REPO" --json publishedAt -q .publishedAt)
+          export URL=$(gh release view --repo "$REPO" --json url -q .url)
+          # `gh ... -q .body` already pre-renders raw markdown without shell
+          # expansion. Pipe via head to cap size, then export for Python.
+          export BODY=$(gh release view --repo "$REPO" --json body -q .body | head -c 1500)
 
           python3 - <<'PY'
           import os, re, pathlib
-          block = os.environ["BLOCK"]
+          tag = os.environ["TAG"]
+          name = os.environ.get("NAME") or tag
+          published = os.environ["PUBLISHED"]
+          url = os.environ["URL"]
+          body = os.environ.get("BODY", "")
+
+          block = (
+              "<!-- LATEST_RELEASE_START -->\n"
+              "<!-- This block is auto-updated by .github/workflows/update-readme.yml on every release. -->\n"
+              "\n"
+              f"### Latest release: [`{tag}`]({url}) — {name}\n"
+              f"Published: `{published}`\n"
+              "\n"
+              "<details>\n"
+              "<summary>Release notes</summary>\n"
+              "\n"
+              f"{body}\n"
+              "\n"
+              "</details>\n"
+              "\n"
+              "<!-- LATEST_RELEASE_END -->"
+          )
+
           p = pathlib.Path("README.md")
           text = p.read_text()
           new = re.sub(
               r"<!-- LATEST_RELEASE_START -->.*?<!-- LATEST_RELEASE_END -->",
-              block,
+              # re.escape would clobber the rendered text, but we never feed
+              # `block` to a regex pattern — only as the replacement.
+              # However `re.sub` interprets backreferences in `repl`, so
+              # neutralize any backslash sequences that could come from the
+              # release body.
+              lambda _m: block,
               text,
               flags=re.DOTALL,
           )

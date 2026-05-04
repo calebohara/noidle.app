@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import logging
 import re
+import subprocess
 import sys
-import threading
 import webbrowser
 from dataclasses import dataclass
-from typing import Callable, Literal
+from typing import Literal
 
 log = logging.getLogger("zig.whats_new")
 
@@ -137,21 +137,109 @@ def show_whats_new(
         return "later"
 
 
-def show_whats_new_async(
-    on_choice: Callable[[Choice], None],
-    **kwargs: object,
-) -> None:
-    """Spawn a daemon thread that runs the modal window — keeps the
-    pystray loop unblocked. Kwargs are forwarded to show_whats_new().
-    """
-    def _runner() -> None:
-        choice = show_whats_new(**kwargs)  # type: ignore[arg-type]
-        try:
-            on_choice(choice)
-        except Exception:
-            log.exception("on_choice callback failed")
+_CHOICE_EXIT_CODES: dict[Choice, int] = {"download": 0, "later": 1, "skip": 2}
+_EXIT_TO_CHOICE: dict[int, Choice] = {v: k for k, v in _CHOICE_EXIT_CODES.items()}
 
-    threading.Thread(target=_runner, name="zig-whats-new", daemon=True).start()
+
+def run_subprocess_dialog() -> int:
+    """Entry point invoked by the launcher's `--whats-new` flag.
+
+    Reads a JSON payload from stdin, shows the modal, and exits with the
+    user's choice mapped to an exit code (0=download, 1=later, 2=skip,
+    3=error). This is what tray.py spawns as a child process so tkinter
+    runs on its OWN main thread instead of a daemon background thread —
+    which is undefined behavior on macOS and a silent corrupter on Windows.
+    """
+    import json
+
+    try:
+        payload = json.loads(sys.stdin.read())
+    except Exception:
+        log.exception("whats_new subprocess: bad stdin JSON")
+        return 3
+    try:
+        choice = show_whats_new(
+            current_version=str(payload["current_version"]),
+            latest_version=str(payload["latest_version"]),
+            release_notes=str(payload.get("release_notes", "")),
+            release_url=str(payload["release_url"]),
+        )
+    except Exception:
+        log.exception("whats_new subprocess: show failed")
+        return 3
+    return _CHOICE_EXIT_CODES.get(choice, 3)
+
+
+def _resolve_subprocess_argv() -> list[str]:
+    """When frozen by PyInstaller sys.executable IS the bundle, so
+    `[bundle, "--whats-new"]` re-launches into our own --whats-new branch.
+    In dev (not frozen) sys.executable is python; we need to pass the
+    launcher script as argv[1].
+    """
+    if getattr(sys, "frozen", False):
+        return [sys.executable, "--whats-new"]
+    # Dev: re-invoke ourselves via `python <launcher> --whats-new`.
+    # sys.argv[0] is the launcher script that originally started this
+    # process, which knows how to dispatch --whats-new.
+    return [sys.executable, sys.argv[0], "--whats-new"]
+
+
+def launch_whats_new_subprocess(
+    *,
+    current_version: str,
+    latest_version: str,
+    release_notes: str,
+    release_url: str,
+    timeout: float = 1800.0,
+) -> Choice:
+    """Spawn the dialog as a child process. Returns the user's choice.
+
+    Falls back to "later" + opens the browser if the subprocess fails to
+    start or never produces a usable exit code.
+    """
+    import json
+
+    payload = json.dumps({
+        "current_version": current_version,
+        "latest_version": latest_version,
+        "release_notes": release_notes,
+        "release_url": release_url,
+    })
+
+    try:
+        proc = subprocess.Popen(
+            _resolve_subprocess_argv(),
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        log.exception("whats_new: failed to spawn subprocess")
+        try:
+            webbrowser.open(release_url)
+        except Exception:
+            pass
+        return "later"
+
+    try:
+        proc.communicate(input=payload.encode("utf-8"), timeout=timeout)
+    except subprocess.TimeoutExpired:
+        log.warning("whats_new subprocess timed out; killing")
+        proc.kill()
+        return "later"
+    except Exception:
+        log.exception("whats_new subprocess communicate failed")
+        return "later"
+
+    choice = _EXIT_TO_CHOICE.get(proc.returncode, "later")
+    if proc.returncode not in _EXIT_TO_CHOICE:
+        log.warning("whats_new subprocess exited with %d (treating as 'later')", proc.returncode)
+    return choice
+
+
+# Re-export for callers that haven't migrated yet (kept private to
+# discourage new direct uses — the subprocess path is now the right one).
+show_whats_new_async = None  # type: ignore[assignment]
 
 
 def _show(current: str, latest: str, notes: str, url: str) -> Choice:

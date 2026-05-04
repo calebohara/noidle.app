@@ -155,33 +155,47 @@ class _LASTINPUTINFO(ctypes.Structure):
 
 _user32 = None
 _kernel32 = None
+_bind_lock = __import__("threading").Lock()
 
 
 def _bind() -> None:
-    """Resolve user32 / kernel32 entry points once. Windows-only."""
+    """Resolve user32 / kernel32 entry points once. Windows-only.
+
+    Lock-protected so concurrent first-use from two threads can't have one
+    thread call SendInput mid-`argtypes` assignment by the other. The fast
+    path (already-bound) is a single load before acquiring the lock.
+    """
     global _user32, _kernel32
     if _user32 is not None:
         return
-    _require_windows()
+    with _bind_lock:
+        if _user32 is not None:
+            return
+        _require_windows()
 
-    _user32 = ctypes.WinDLL("user32", use_last_error=True)
-    _kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        u32 = ctypes.WinDLL("user32", use_last_error=True)
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
-    # SendInput(UINT cInputs, LPINPUT pInputs, int cbSize) -> UINT
-    _user32.SendInput.argtypes = [ctypes.c_uint, ctypes.POINTER(_INPUT), ctypes.c_int]
-    _user32.SendInput.restype = ctypes.c_uint
+        # SendInput(UINT cInputs, LPINPUT pInputs, int cbSize) -> UINT
+        u32.SendInput.argtypes = [ctypes.c_uint, ctypes.POINTER(_INPUT), ctypes.c_int]
+        u32.SendInput.restype = ctypes.c_uint
 
-    # GetLastInputInfo(PLASTINPUTINFO) -> BOOL
-    _user32.GetLastInputInfo.argtypes = [ctypes.POINTER(_LASTINPUTINFO)]
-    _user32.GetLastInputInfo.restype = ctypes.c_int
+        # GetLastInputInfo(PLASTINPUTINFO) -> BOOL
+        u32.GetLastInputInfo.argtypes = [ctypes.POINTER(_LASTINPUTINFO)]
+        u32.GetLastInputInfo.restype = ctypes.c_int
 
-    # GetTickCount() -> DWORD
-    _kernel32.GetTickCount.argtypes = []
-    _kernel32.GetTickCount.restype = ctypes.c_uint
+        # GetTickCount() -> DWORD
+        k32.GetTickCount.argtypes = []
+        k32.GetTickCount.restype = ctypes.c_uint
 
-    # SetThreadExecutionState(EXECUTION_STATE esFlags) -> EXECUTION_STATE
-    _kernel32.SetThreadExecutionState.argtypes = [ctypes.c_uint]
-    _kernel32.SetThreadExecutionState.restype = ctypes.c_uint
+        # SetThreadExecutionState(EXECUTION_STATE esFlags) -> EXECUTION_STATE
+        k32.SetThreadExecutionState.argtypes = [ctypes.c_uint]
+        k32.SetThreadExecutionState.restype = ctypes.c_uint
+
+        # Publish only after argtypes are fully wired so other threads can't
+        # observe a half-initialized binding.
+        _user32 = u32
+        _kernel32 = k32
 
 
 # --------------------------------------------------------------------------- #
@@ -204,10 +218,15 @@ def prevent_sleep() -> int:
     """
     _bind()
     assert _kernel32 is not None  # _bind() raises on non-Windows
+    ctypes.set_last_error(0)
     flags = ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED
     prev = _kernel32.SetThreadExecutionState(flags)
-    if prev == 0:
-        raise ctypes.WinError(ctypes.get_last_error())
+    # MSDN: return value is the *previous* EXECUTION_STATE — 0 is a valid
+    # prior state (e.g. first call in a session with no flags set). Only
+    # treat as error when GetLastError reports a real failure.
+    err = ctypes.get_last_error()
+    if err:
+        raise ctypes.WinError(err)
     return prev
 
 
@@ -218,9 +237,11 @@ def allow_sleep() -> int:
     """
     _bind()
     assert _kernel32 is not None
+    ctypes.set_last_error(0)
     prev = _kernel32.SetThreadExecutionState(ES_CONTINUOUS)
-    if prev == 0:
-        raise ctypes.WinError(ctypes.get_last_error())
+    err = ctypes.get_last_error()
+    if err:
+        raise ctypes.WinError(err)
     return prev
 
 

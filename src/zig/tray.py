@@ -23,8 +23,14 @@ from .hotkey import HotkeyListener
 from .jiggler import Jiggler, JigglerState, Method
 from .logging_setup import log_dir, setup_file_logging
 from .stats import Stats
-from .updater import check_for_update
-from .whats_new import mock_for_preview, show_whats_new_async
+from .updater import (
+    CURRENT_VERSION,
+    UpdateInfo,
+    check_for_update,
+    is_offerable,
+    should_check_now,
+)
+from .whats_new import launch_whats_new_subprocess, mock_for_preview
 from .winapi import get_idle_seconds
 
 log = logging.getLogger("zig.tray")
@@ -78,6 +84,15 @@ def _safe_autostart_is_enabled() -> bool:
 
 
 def _open_path(p: Path) -> None:
+    """Open a folder/file with the OS handler. Creates the folder first if
+    it's a directory that doesn't exist yet — fixes the v0.3.3 bug where
+    'Open data folder' silently failed on a fresh install before any save.
+    """
+    try:
+        if p.is_dir() or (not p.exists() and p.suffix == ""):
+            p.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
     if sys.platform == "win32":
         os.startfile(str(p))  # type: ignore[attr-defined]
     elif sys.platform == "darwin":
@@ -96,7 +111,9 @@ class TrayApp:
         self.jiggler.on_state_change = self._on_state_change
 
         self._hotkey: HotkeyListener | None = None
+        self._hotkey_error: str = ""  # Empty if registered OK; user-facing message otherwise.
         self._last_offered_version: str = ""
+        self._quitting = threading.Event()  # Short-circuits callbacks during shutdown.
 
         self._icon = pystray.Icon(
             "noidle",
@@ -138,6 +155,12 @@ class TrayApp:
             MenuItem("Check for updates on launch",
                      self._toggle_update_check,
                      checked=lambda _i: self.config.check_for_updates),
+            # Hotkey-status indicator: the visibility predicate hides it when
+            # registration succeeded so it only nags when there's a real
+            # problem the user needs to know about.
+            MenuItem(lambda _i: f"⚠ Hotkey unavailable: {self._hotkey_error}",
+                     self._show_hotkey_error,
+                     visible=lambda _i: bool(self._hotkey_error)),
             Menu.SEPARATOR,
             MenuItem("Show stats", self._show_stats),
             MenuItem("Reset stats", self._reset_stats),
@@ -155,6 +178,8 @@ class TrayApp:
 
     def _make_set_interval(self, secs: float):
         def _set(_icon, _item) -> None:
+            if self._quitting.is_set():
+                return
             self.jiggler.set_interval(secs)
             self.config.interval_seconds = secs
             self._save()
@@ -168,6 +193,8 @@ class TrayApp:
 
     def _make_set_method(self, method: Method):
         def _set(_icon, _item) -> None:
+            if self._quitting.is_set():
+                return
             self.jiggler.set_method(method)
             self.config.method = method
             self._save()
@@ -182,6 +209,8 @@ class TrayApp:
     # ---- toggles -------------------------------------------------------- #
 
     def _toggle(self, _icon, _item) -> None:
+        if self._quitting.is_set():
+            return
         if self.jiggler.state.running:
             self.jiggler.stop()
             self.stats.stopped()
@@ -191,6 +220,8 @@ class TrayApp:
         self._refresh()
 
     def _toggle_smart_pause(self, _icon, _item) -> None:
+        if self._quitting.is_set():
+            return
         new = not self.config.smart_pause
         self.config.smart_pause = new
         self.jiggler.set_smart_pause(new)
@@ -198,6 +229,8 @@ class TrayApp:
         self._refresh()
 
     def _toggle_pause_share(self, _icon, _item) -> None:
+        if self._quitting.is_set():
+            return
         new = not self.config.pause_on_screen_share
         self.config.pause_on_screen_share = new
         self.jiggler.set_pause_on_screen_share(new)
@@ -205,6 +238,8 @@ class TrayApp:
         self._refresh()
 
     def _toggle_autostart(self, _icon, _item) -> None:
+        if self._quitting.is_set():
+            return
         try:
             if autostart_is_enabled():
                 autostart_disable()
@@ -214,10 +249,12 @@ class TrayApp:
                 self.config.autostart = True
             self._save()
         except RuntimeError as e:
-            self._icon.notify(str(e), "noidle")
+            self._notify(str(e))
         self._refresh()
 
     def _toggle_update_check(self, _icon, _item) -> None:
+        if self._quitting.is_set():
+            return
         self.config.check_for_updates = not self.config.check_for_updates
         self._save()
         self._refresh()
@@ -225,24 +262,31 @@ class TrayApp:
     # ---- actions -------------------------------------------------------- #
 
     def _show_stats(self, _icon, _item) -> None:
-        self._icon.notify(self.stats.summary(), "noidle")
+        self._notify(self.stats.summary())
 
     def _reset_stats(self, _icon, _item) -> None:
         self.stats.reset()
-        self._icon.notify("Stats reset.", "noidle")
+        self._notify("Stats reset.")
 
     def _show_idle(self, _icon, _item) -> None:
         try:
             idle = get_idle_seconds()
         except Exception:
             idle = -1.0
-        self._icon.notify(f"Idle: {idle:.1f}s", "noidle")
+        self._notify(f"Idle: {idle:.1f}s")
+
+    def _show_hotkey_error(self, _icon, _item) -> None:
+        if self._hotkey_error:
+            self._notify(
+                f"Couldn't register {self.config.hotkey}: {self._hotkey_error}\n"
+                "Another app may already own this chord. Edit config.json to change it."
+            )
 
     def _show_autostart_target(self, _icon, _item) -> None:
         try:
-            self._icon.notify(autostart_target(), "noidle")
+            self._notify(autostart_target())
         except RuntimeError as e:
-            self._icon.notify(str(e), "noidle")
+            self._notify(str(e))
 
     def _open_log(self, _icon, _item) -> None:
         try:
@@ -257,42 +301,67 @@ class TrayApp:
             log.exception("open data folder failed")
 
     def _manual_update_check(self, _icon, _item) -> None:
+        if self._quitting.is_set():
+            return
         threading.Thread(target=self._do_update_check, args=(True,), daemon=True).start()
 
     def _do_update_check(self, manual: bool) -> None:
+        if self._quitting.is_set():
+            return
         info = check_for_update()
+        # Always record the attempt so the cache is honored next launch.
+        self.config.last_update_check_at = time.time()
+        self.config.last_update_check_failed = info is None
+        self._save()
+
         if info is None:
             if manual:
-                self._icon.notify("Update check failed (offline?)", "noidle")
+                self._notify("Update check failed (offline?)")
             return
         if not info.is_newer:
             if manual:
-                self._icon.notify(f"Up to date (v{info.current})", "noidle")
+                self._notify(f"Up to date (v{info.current})")
             return
-        # Auto-checks honor the user's "Skip this version" choice;
-        # manual checks always show the window so the user can override.
-        if not manual and info.latest == self.config.skipped_version:
-            log.info("update v%s skipped per user preference", info.latest)
+        # Auto-checks honor "Skip this version" as a *floor*: only re-prompt
+        # when the new version is strictly newer than what was skipped.
+        # Manual checks always show so the user can override.
+        if not manual and not is_offerable(info.latest, self.config.skipped_version):
+            log.info("update v%s gated by skipped_version=%r", info.latest, self.config.skipped_version)
             return
-        self._open_whats_new(info.current, info.latest, info.body, info.url)
+        self._open_whats_new(info)
 
-    def _open_whats_new(self, current: str, latest: str, body: str, url: str) -> None:
-        self._last_offered_version = latest
-        show_whats_new_async(
-            self._handle_update_choice,
-            current_version=current,
-            latest_version=latest,
-            release_notes=body,
-            release_url=url,
-        )
+    def _open_whats_new(self, info: UpdateInfo) -> None:
+        if self._quitting.is_set():
+            return
+        self._last_offered_version = info.latest
+        # Run the dialog in a SUBPROCESS so tkinter executes on its own main
+        # thread. Spawning daemon threads that call tk.Tk() is a documented
+        # crash on macOS and a silent corrupter on Windows.
+        threading.Thread(
+            target=self._launch_whats_new_thread,
+            args=(info.current, info.latest, info.body, info.url),
+            daemon=True,
+        ).start()
+
+    def _launch_whats_new_thread(self, current: str, latest: str, body: str, url: str) -> None:
+        try:
+            choice = launch_whats_new_subprocess(
+                current_version=current,
+                latest_version=latest,
+                release_notes=body,
+                release_url=url,
+            )
+        except Exception:
+            log.exception("whats_new subprocess failed")
+            return
+        if self._quitting.is_set():
+            return
+        self._handle_update_choice(choice)
 
     def _handle_update_choice(self, choice: str) -> None:
-        # Runs on the whats_new worker thread; no Tk objects touched here.
         if choice == "skip":
-            # Store the version we just showed so we don't re-prompt for it.
-            # (We stash it on tray.config; the dialog itself doesn't know.)
             try:
-                latest = getattr(self, "_last_offered_version", None)
+                latest = self._last_offered_version
                 if latest:
                     self.config.skipped_version = latest
                     self._save()
@@ -306,11 +375,27 @@ class TrayApp:
     def _preview_whats_new(self, _icon, _item) -> None:
         # Debug menu item: opens the window with mock data so the user
         # can see what an update prompt looks like without waiting.
+        # IMPORTANT: do NOT touch _last_offered_version — clicking Skip in
+        # the preview must not poison the real config with the mock version.
+        if self._quitting.is_set():
+            return
         kwargs = mock_for_preview()
-        self._last_offered_version = kwargs["latest_version"]
-        show_whats_new_async(self._handle_update_choice, **kwargs)
+        threading.Thread(
+            target=self._launch_preview_thread,
+            args=(kwargs,),
+            daemon=True,
+        ).start()
+
+    def _launch_preview_thread(self, kwargs: dict) -> None:
+        try:
+            launch_whats_new_subprocess(**kwargs)
+        except Exception:
+            log.exception("preview subprocess failed")
 
     def _quit(self, _icon, _item) -> None:
+        # Set the shutdown flag FIRST so any in-flight callbacks short-circuit
+        # before we start tearing things down.
+        self._quitting.set()
         try:
             if self._hotkey is not None:
                 try:
@@ -320,21 +405,28 @@ class TrayApp:
             self.jiggler.stop()
             self.stats.stopped()
         finally:
-            self._icon.stop()
+            try:
+                self._icon.stop()
+            except Exception:
+                log.exception("icon.stop failed")
 
     # ---- internals ------------------------------------------------------ #
 
     def _on_state_change(self, _state: JigglerState) -> None:
+        if self._quitting.is_set():
+            return
         self._refresh()
 
     def _refresh(self) -> None:
+        if self._quitting.is_set():
+            return
         st = self.jiggler.state
-        self._icon.icon = _make_icon(_ACTIVE_RGB if st.running else _PAUSED_RGB)
-        self._icon.title = self._tooltip(st)
         try:
+            self._icon.icon = _make_icon(_ACTIVE_RGB if st.running else _PAUSED_RGB)
+            self._icon.title = self._tooltip(st)
             self._icon.update_menu()
         except Exception:
-            log.debug("update_menu failed", exc_info=True)
+            log.debug("_refresh failed", exc_info=True)
 
     def _save(self) -> None:
         try:
@@ -342,38 +434,85 @@ class TrayApp:
         except Exception:
             log.exception("save_config failed")
 
+    def _notify(self, message: str) -> None:
+        """Wrapper around icon.notify that won't blow up during shutdown."""
+        if self._quitting.is_set():
+            return
+        try:
+            self._icon.notify(message, "noidle")
+        except Exception:
+            log.debug("notify failed", exc_info=True)
+
     def _tooltip(self, st: JigglerState) -> str:
         status = "running" if st.running else "paused"
+        hotkey_line = self.config.hotkey if not self._hotkey_error else f"{self.config.hotkey} (unavailable)"
         return (
             f"noidle.app — {status}\n"
             f"method: {self.jiggler.method}  every {self.jiggler.interval_seconds:.0f}s\n"
+            f"hotkey: {hotkey_line}\n"
             f"last jiggle: {_format_last(st.last_jiggle_at)}"
         )
 
     # ---- public --------------------------------------------------------- #
 
     def run(self) -> None:
+        # Hotkey: register first, surface failures immediately. A silent
+        # failure (the v0.3.3 behavior) means the user presses Ctrl+Alt+Z
+        # forever expecting it to work.
         try:
             self._hotkey = HotkeyListener(self.config.hotkey, self._hotkey_pressed)
             self._hotkey.start()
         except NotImplementedError:
+            # Off-Windows dev — don't surface as user-facing error, the
+            # menu still works.
             log.warning("global hotkey unavailable on this platform; tray menu still works")
-        except Exception:
-            log.exception("hotkey startup failed; continuing without it")
+        except Exception as exc:
+            self._hotkey_error = str(exc) or type(exc).__name__
+            log.warning("hotkey registration failed: %s", self._hotkey_error)
+            # Schedule a notification once the icon is up; doing it before
+            # icon.run() is racy with pystray's setup.
+            threading.Thread(
+                target=self._notify_hotkey_failure_after_start,
+                daemon=True,
+            ).start()
 
-        if self.config.check_for_updates:
+        # Auto-clear stale skipped_version: if the user previously skipped
+        # v0.4.0 and is now running v0.4.0+, their skip is by definition
+        # satisfied — clear it so future patches don't get silently gated.
+        if self.config.skipped_version and not is_offerable(self.config.skipped_version, CURRENT_VERSION):
+            log.info("clearing stale skipped_version=%r (current=%s)",
+                     self.config.skipped_version, CURRENT_VERSION)
+            self.config.skipped_version = ""
+            self._save()
+
+        # Update check: rate-limited via cached timestamps in the config so
+        # captive portals + 60+ launches/day don't get the user 403'd.
+        if (self.config.check_for_updates
+                and should_check_now(self.config.last_update_check_at,
+                                     self.config.last_update_check_failed)):
             threading.Thread(target=self._do_update_check, args=(False,), daemon=True).start()
 
         self._icon.run()
 
+    def _notify_hotkey_failure_after_start(self) -> None:
+        # Wait a beat for the icon to be visible before notifying.
+        time.sleep(2.0)
+        self._notify(
+            f"Couldn't register hotkey {self.config.hotkey}: {self._hotkey_error}.\n"
+            "The tray menu still works. Edit config.json to change the chord."
+        )
+
     def _hotkey_pressed(self) -> None:
         # Runs on the hotkey listener thread; pystray marshals icon updates.
+        if self._quitting.is_set():
+            return
         self._toggle(self._icon, None)
 
 
 def run_tray() -> None:
     log_path = setup_file_logging()
-    log.info("noidle.app tray starting (log=%s, data=%s)", log_path, log_dir())
+    log.info("noidle.app v%s tray starting (log=%s, data=%s)",
+             CURRENT_VERSION, log_path, log_dir())
 
     cfg = load_config()
     jiggler = Jiggler(

@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: write
-  actions: write
 
 jobs:
   build:
@@ -38,19 +37,49 @@ jobs:
           fi
 
       - name: Build with PyInstaller
-        run: pyinstaller --onefile --noconsole --name noidle --icon assets/icon.ico --add-data "assets;assets" --paths src --hidden-import zig --hidden-import zig.tray --hidden-import zig.jiggler --hidden-import zig.winapi --hidden-import zig.activity --hidden-import zig.autostart --hidden-import zig.config --hidden-import zig.hotkey --hidden-import zig.logging_setup --hidden-import zig.stats --hidden-import zig.updater --hidden-import zig.whats_new noidle.py
+        # --collect-submodules zig replaces the brittle hand-maintained list of
+        # --hidden-import flags. Adding a new src/zig/foo.py module is now picked
+        # up automatically by the bundle (and by the smoke test, which uses
+        # pkgutil.iter_modules to mirror the same discovery).
+        run: pyinstaller --onefile --noconsole --name noidle --icon assets/icon.ico --add-data "assets;assets" --paths src --collect-submodules zig noidle.py
 
       - name: Smoke-test built .exe (--smoke imports everything and exits 0)
+        # --noconsole strips stdout from the .exe; we ALSO build a console
+        # shim ("noidle-debug.exe") so a smoke failure produces a real
+        # diagnostic in the Actions log instead of just an exit code. The
+        # debug exe is NOT shipped — it's deleted before artifact upload.
         shell: pwsh
         run: |
           $exe = "dist/noidle.exe"
           if (-not (Test-Path $exe)) { Write-Error "Build produced no exe"; exit 1 }
-          $p = Start-Process -FilePath $exe -ArgumentList "--smoke" -Wait -PassThru -NoNewWindow
+
+          # Build a parallel console-mode exe purely for capturing smoke output.
+          pyinstaller --onefile --console --name noidle-debug --paths src --collect-submodules zig noidle.py
+          $dbg = "dist/noidle-debug.exe"
+          if (-not (Test-Path $dbg)) { Write-Error "Debug exe build failed"; exit 1 }
+
+          # Run the debug exe so we can see stdout if smoke fails.
+          $p = Start-Process -FilePath $dbg -ArgumentList "--smoke" -Wait -PassThru -NoNewWindow -RedirectStandardOutput smoke-out.txt -RedirectStandardError smoke-err.txt
+          Write-Host "--- smoke stdout ---"
+          if (Test-Path smoke-out.txt) { Get-Content smoke-out.txt }
+          Write-Host "--- smoke stderr ---"
+          if (Test-Path smoke-err.txt) { Get-Content smoke-err.txt }
           Write-Host "Exit code: $($p.ExitCode)"
+
           if ($p.ExitCode -ne 0) {
-            Write-Error "noidle.exe --smoke failed with exit $($p.ExitCode) — startup imports broke. Refusing to publish."
+            Write-Error "noidle-debug.exe --smoke failed with exit $($p.ExitCode). Refusing to publish."
             exit 1
           }
+
+          # Sanity: also run the real --noconsole exe and confirm it exits 0.
+          $p2 = Start-Process -FilePath $exe -ArgumentList "--smoke" -Wait -PassThru -NoNewWindow
+          if ($p2.ExitCode -ne 0) {
+            Write-Error "noidle.exe (--noconsole) --smoke failed with exit $($p2.ExitCode). Refusing to publish."
+            exit 1
+          }
+
+          # Don't ship the debug exe.
+          Remove-Item $dbg -Force
 
       - name: Compute MSI version
         id: msi_version
@@ -99,9 +128,8 @@ jobs:
             dist/noidle.msi
           generate_release_notes: true
 
-      - name: Trigger README auto-update
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run update-readme.yml --repo ${{ github.repository }} --ref main
-        shell: bash
+      # NOTE: deliberately no `Trigger README auto-update` step here.
+      # update-readme.yml triggers on `release: published` directly, so
+      # explicitly invoking it (a) duplicated work and (b) required
+      # `actions: write` on this job's GITHUB_TOKEN — a permission we now
+      # don't need, narrowing the blast radius of any compromise.
