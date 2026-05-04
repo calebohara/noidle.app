@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+      Name="MouseZiggler"
+      Manufacturer="MouseZiggler"
+      Version="$(var.Version)"
+      UpgradeCode="6f2c4d1e-3a7b-4e9d-9c1b-7a8d2e6f4b10"
+      Scope="perUser"
+      Compressed="yes"
+      InstallerVersion="500">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="MouseZiggler" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="MouseZiggler" />
+    </StandardDirectory>
+
+    <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="2bd1f1a7-91f2-4f3c-9c0a-1d3e7c5b6a40">
+      <File Id="MouseZigglerExe"
+            Source="dist/MouseZiggler.exe"
+            KeyPath="yes" />
+      <RegistryValue Root="HKCU"
+                     Key="Software\MouseZiggler"
+                     Name="installed"
+                     Type="integer"
+                     Value="1" />
+      <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
+    </Component>
+
+    <Component Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Guid="9f6e8a44-2b1c-4f87-bb3d-5a8c0e9d1c22">
+      <Shortcut Id="MouseZigglerShortcut"
+                Name="MouseZiggler"
+                Description="Keep your machine awake"
+                Target="[INSTALLFOLDER]MouseZiggler.exe"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="RemoveStartMenuFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+      <RegistryValue Root="HKCU"
+                     Key="Software\MouseZiggler"
+                     Name="shortcut"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+
+    <Feature Id="Main" Title="MouseZiggler" Level="1">
+      <ComponentRef Id="MainExecutable" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+  </Package>
+</Wix>

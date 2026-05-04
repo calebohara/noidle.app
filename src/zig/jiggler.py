@@ -7,6 +7,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable, Literal, Optional
 
+from .activity import is_teams_screen_sharing, should_skip_for_user_activity
 from .winapi import (
     allow_sleep,
     get_idle_seconds,
@@ -14,6 +15,8 @@ from .winapi import (
     send_f15,
     send_mouse_jitter,
 )
+
+from .stats import Stats
 
 log = logging.getLogger("zig.jiggler")
 
@@ -35,7 +38,10 @@ class JigglerState:
 class Jiggler:
     interval_seconds: float = 45.0
     method: Method = "both"
+    smart_pause: bool = True
+    pause_on_screen_share: bool = True
     on_state_change: Optional[Callable[[JigglerState], None]] = None
+    stats: Optional[Stats] = None
 
     _stop: threading.Event = field(default_factory=threading.Event, init=False, repr=False)
     _thread: Optional[threading.Thread] = field(default=None, init=False, repr=False)
@@ -63,6 +69,14 @@ class Jiggler:
             raise ValueError(f"invalid method: {method}")
         with self._lock:
             self.method = method
+
+    def set_smart_pause(self, enabled: bool) -> None:
+        with self._lock:
+            self.smart_pause = bool(enabled)
+
+    def set_pause_on_screen_share(self, enabled: bool) -> None:
+        with self._lock:
+            self.pause_on_screen_share = bool(enabled)
 
     def start(self) -> None:
         with self._lock:
@@ -104,6 +118,26 @@ class Jiggler:
     def _do_jiggle(self) -> None:
         with self._lock:
             method = self.method
+            smart = self.smart_pause
+            pause_share = self.pause_on_screen_share
+
+        if smart and should_skip_for_user_activity():
+            with self._lock:
+                self._state.tick_count += 1
+            if self.stats is not None:
+                self.stats.record_skip("active")
+            log.debug("tick skipped: user is active")
+            self._notify()
+            return
+
+        if pause_share and is_teams_screen_sharing():
+            with self._lock:
+                self._state.tick_count += 1
+            if self.stats is not None:
+                self.stats.record_skip("screenshare")
+            log.debug("tick skipped: Teams is screen sharing")
+            self._notify()
+            return
 
         if method in ("mouse", "both"):
             send_mouse_jitter()
@@ -121,6 +155,9 @@ class Jiggler:
             self._state.last_jiggle_at = time.time()
             self._state.last_idle_seconds = idle
             self._state.tick_count += 1
+
+        if self.stats is not None:
+            self.stats.record_jiggle(idle)
 
         if idle is not None and idle > 2.0:
             log.warning("post-jiggle idle=%.2fs (expected ~0)", idle)

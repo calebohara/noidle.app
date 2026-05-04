@@ -19,9 +19,10 @@ It is more than a power setting. `mouse_ziggler` injects real synthetic input th
 
 Grab the latest signed-release `.exe` from the Releases page:
 
-**▶ [Download MouseZiggler.exe](https://github.com/calebohara/mouse_ziggler/releases/latest)**
+**▶ [Download MouseZiggler.exe](https://github.com/calebohara/mouse_ziggler/releases/latest)** — single-file portable
+**📦 [Download MouseZiggler.msi](https://github.com/calebohara/mouse_ziggler/releases/latest)** — per-user installer (no admin), adds to Start Menu
 
-No installer. Double-click, the icon lands in your system tray, right-click it to Start.
+Double-click, the icon lands in your system tray, right-click it to Start.
 
 <!-- LATEST_RELEASE_START -->
 <!-- This block is auto-updated by .github/workflows/update-readme.yml on every release. -->
@@ -56,11 +57,19 @@ You can flip between mouse-only, key-only, or both from the tray menu.
 ## Usage
 
 ### Tray controls
-- **▶ Start / ⏸ Pause** — toggles the jiggle loop
+- **▶ Start / ⏸ Pause** — toggles the jiggle loop (also bound to **Ctrl+Alt+Z** global hotkey)
 - **Interval** — 15s, 30s, 45s, 60s, 90s, 2m, 5m
 - **Method** — Mouse / Key / Both
+- **Smart pause when active** — skips the jiggle if you're already typing/mousing (no cursor twitches mid-click)
+- **Pause during Teams screen share** — auto-pauses when Teams is broadcasting your screen
+- **Start with Windows** — adds/removes a `HKCU\Run` registry entry, no admin needed
+- **Check for updates on launch** — pings GitHub Releases; notifies if a new version is out
+- **Show stats** — uptime, total jiggles, skipped (active / screenshare)
 - **Show idle time** — current `GetLastInputInfo` reading (for sanity-checking)
+- **Open log / Open data folder** — jumps to `%LOCALAPPDATA%\MouseZiggler\zig.log` and `%APPDATA%\MouseZiggler\`
 - **Quit**
+
+All settings persist atomically to `%APPDATA%\MouseZiggler\config.json` (survives mid-write crashes).
 
 ### From source (developers)
 ```powershell

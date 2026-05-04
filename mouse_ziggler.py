@@ -46,20 +46,29 @@ def _smoke() -> int:
     Run by CI after PyInstaller builds. Catches:
       - Relative-import regressions (the v0.1.0 bug)
       - Constructor signature drift between modules
-      - Missing-symbol regressions (e.g. winapi exports a function the
-        jiggler imports)
+      - Missing-symbol regressions
       - Method-signature mismatches at call sites used in startup code
+      - Newly-added modules failing to import in the bundle
     Does NOT call into ctypes (Win32) or pystray.run() — those can't be
     safely exercised in headless CI.
     """
+    import zig.activity
+    import zig.autostart
+    import zig.config
+    import zig.hotkey
     import zig.jiggler
+    import zig.logging_setup
+    import zig.stats
     import zig.tray
+    import zig.updater
     import zig.winapi
 
     j = zig.jiggler.Jiggler(interval_seconds=10.0, method="both")
     assert j.state.running is False
     j.set_interval(20.0)
     j.set_method("mouse")
+    j.set_smart_pause(False)
+    j.set_pause_on_screen_share(False)
     assert j.method == "mouse"
 
     for name in ("prevent_sleep", "allow_sleep", "send_mouse_jitter",
@@ -74,6 +83,23 @@ def _smoke() -> int:
         print(f"smoke FAIL: send_mouse_jitter has params {sig}", flush=True)
         return 3
 
+    cfg = zig.config.load()
+    assert hasattr(cfg, "interval_seconds")
+    assert hasattr(cfg, "method")
+    assert hasattr(cfg, "smart_pause")
+    assert hasattr(cfg, "pause_on_screen_share")
+    assert hasattr(cfg, "autostart")
+    assert hasattr(cfg, "hotkey")
+
+    mods, vk = zig.hotkey.parse_hotkey("ctrl+alt+z")
+    assert mods != 0 and vk != 0
+
+    s = zig.stats.Stats()
+    s.started()
+    s.record_jiggle()
+    s.record_skip("active")
+    assert "Jiggles" in s.summary()
+
     print("smoke ok", flush=True)
     return 0
 
@@ -82,7 +108,7 @@ def main() -> int:
     if "--smoke" in sys.argv:
         return _smoke()
     if "--version" in sys.argv:
-        print("mouse_ziggler 0.1.2", flush=True)
+        print("mouse_ziggler 0.2.0", flush=True)
         return 0
     from zig.tray import run_tray
     run_tray()
