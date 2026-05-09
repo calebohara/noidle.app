@@ -5,8 +5,6 @@ network. Safe to run on Linux/macOS CI runners.
 """
 import time
 
-import pytest
-
 from zig.updater import (
     _is_newer,
     _is_safe_release_url,

@@ -1,6 +1,4 @@
 """Tests for zig.whats_new.parse_release_notes — pure Python, no GUI."""
-import pytest
-
 from zig.whats_new import parse_release_notes
 
 

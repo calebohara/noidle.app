@@ -1,10 +1,4 @@
 """Tests for zig.config — config loading, coercion, and save/load round-trips."""
-import json
-import os
-from pathlib import Path
-
-import pytest
-
 from zig.config import Config, _coerce, load, save
 
 
