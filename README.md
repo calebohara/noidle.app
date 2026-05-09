@@ -27,25 +27,28 @@ Want to verify the binary you just downloaded? Every release ships a `SHA256SUMS
 <!-- LATEST_RELEASE_START -->
 <!-- This block is auto-updated by .github/workflows/update-readme.yml on every release. -->
 
-### Latest release: [`v0.3.7`](https://github.com/calebohara/noidle.app/releases/tag/v0.3.7) — v0.3.7
-Published: `2026-05-04T16:53:04Z`
+### Latest release: [`v0.3.8`](https://github.com/calebohara/noidle.app/releases/tag/v0.3.8) — v0.3.8
+Published: `2026-05-09T21:26:30Z`
 
 <details>
 <summary>Release notes</summary>
 
-Two-part release. v0.3.6 closed the 3 deferred audit CRITs but shipped an empty SHA256SUMS.txt (PowerShell -Include gotcha); v0.3.7 fixes that. Use v0.3.7 — v0.3.6 has been superseded for the verification artifacts.
+### Security
+
+* **HIGH-1 fixed** — symlink/junction attack on log directory writes: `path.is_symlink()` guard added in `logging_setup.py` and `noidle.py _crash_log_path()`. A pre-positioned attacker who turned `%LOCALAPPDATA%\noidle\` into a junction could no longer weaponize noidle as an arbitrary file-write primitive.
+* **HIGH-2 fixed** — all GitHub Actions in `build.yml`, `lint.yml`, and `update-readme.yml` pinned to immutable commit SHAs (was: mutable major-version tags). Supply-chain compromise via re-pointed upstream tag is no longer possible.
 
 ### Added
-* SHA256SUMS.txt published with every release for tamper-evidence — verifiable with `Get-FileHash` (PowerShell) or `sha256sum` (Linux/macOS)
-* cosign keyless signatures (`.sig` + `.pem`) for `noidle.exe`, `noidle.msi`, and `SHA256SUMS.txt` — generated via GitHub OIDC and logged to the Sigstore Rekor transparency log
-* `SIGNING.md` with verification commands and SignPath OSS Foundation application steps
-* Install-mode-aware autostart fully closes CRIT-B — MSI and portable `.exe` now use distinct registry values (`noidle.app` / `noidle.app-portable` / `noidle.app-dev`)
+
+* **Full pytest suite** — 5 new platform-independent test modules covering updater (version comparison, URL safety, rate limiting), hotkey parsing, config coercion + round-trips, whats_new parsing, and jiggler API validation. Runs on Linux/macOS/Windows CI with no Win32 calls.
+* **Version consistency smoke check** — `_smoke()` now reads `pyproject.toml` via `tomllib` and asserts `zig.__version__` matches. Catches accidental version drift before a PyInstaller bundle ships.
+* **Landing page: Open Graph image** — `og:image` was a `data:` URI (universally rejected by social crawlers). Now served as `https://noidle.app/og.svg` — social previews work on X, LinkedIn, Slack, iMessage.
+* **Landing page: CSP + X-Frame-Options** — added to `vercel.json` headers.
+* **Landing page: live taskbar clock** — date element now also updates in real time.
 
 ### Fixed
-* Hotkey-registration-failure at startup now opens a Tk dialog instead of a tray balloon (Focus Assist can't swallow it)
-* SHA256SUMS.txt was empty in v0.3.6 — PowerShell `Get-ChildItem -Include` gotcha; now enumerates explicitly
 
-**Full Changelog**: https://github.com/calebohara/noidle.app/compare/v0.3.5...v0.3.7
+* `jiggler.start()` state corruption — `_state.running 
 
 </details>
 
