@@ -32,4 +32,5 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
-.claude/
+.claude/*
+!.claude/agents
