@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0a0a0f">
   <meta name="color-scheme" content="dark">
 
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%2322c55e' stroke='%23064e3b' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
   <meta property="og:title" content="noidle.app — keep your status fresh">
   <meta property="og:description" content="Keep your Microsoft Teams presence green without parking your laptop on a fake screensaver. Tiny, free, MIT, no telemetry.">
@@ -16,6 +16,8 @@
   <meta property="og:url" content="https://noidle.app">
   <meta property="og:image" content="https://noidle.app/og.svg">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="noidle.app — stay Available in Teams">
+  <meta name="twitter:description" content="A friendly Windows tray app that keeps your Teams presence green and your machine awake. Free, MIT, no telemetry.">
   <meta name="twitter:image" content="https://noidle.app/og.svg">
   <link rel="canonical" href="https://noidle.app">
 
@@ -67,6 +69,16 @@
     }
     a { color: var(--ink); text-decoration: none; transition: color 0.15s; }
     a:hover { color: var(--green); }
+    a:focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 3px;
+      border-radius: 3px;
+    }
+    button:focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 3px;
+      border-radius: 3px;
+    }
 
     code, kbd, .mono { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
     code {
@@ -82,7 +94,7 @@
       display: inline-block;
       padding: 0.18em 0.55em;
       border-radius: 5px;
-      background: linear-gradient(180deg, #25252f, #1a1a23);
+      background: linear-gradient(180deg, var(--line-2), var(--bg-3));
       border: 1px solid var(--line-2);
       box-shadow: inset 0 -1px 0 rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.04);
       color: var(--ink-2);
@@ -140,8 +152,8 @@
       display: inline-flex; align-items: center; gap: 9px;
       padding: 6px 14px;
       border-radius: 999px;
-      background: rgba(34, 197, 94, 0.08);
-      border: 1px solid rgba(34, 197, 94, 0.22);
+      background: rgba(34, 197, 94, 0.10);
+      border: 1px solid rgba(34, 197, 94, 0.35);
       color: #86efac;
       font-family: "JetBrains Mono"; font-size: 12.5px; font-weight: 500;
       margin-bottom: 28px;
@@ -155,7 +167,7 @@
     }
     @keyframes subtlepulse {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+      50% { opacity: 0.6; }
     }
     h1 {
       font-family: "Inter";
@@ -169,7 +181,7 @@
     }
     h1 .stripe {
       display: inline-block;
-      background: linear-gradient(180deg, var(--green) 0%, #15803d 100%);
+      background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
@@ -225,7 +237,7 @@
     .cta-meta {
       margin-top: 18px;
       font-family: "JetBrains Mono";
-      font-size: 12.5px; color: var(--ink-4);
+      font-size: 12.5px; color: #9898a2;
       letter-spacing: 0;
     }
     .cta-meta a { color: var(--ink-3); border-bottom: 1px dashed var(--line-2); }
@@ -251,6 +263,11 @@
     @keyframes bobdown {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(4px); }
+    }
+    .demo-prompt-mobile { display: none; }
+    @media (max-width: 720px) {
+      .demo-prompt-desktop { display: none; }
+      .demo-prompt-mobile { display: inline; }
     }
 
     /* The fake desktop "screen" — gives the taskbar context */
@@ -278,7 +295,8 @@
     .desktop-callout {
       position: absolute;
       top: 32px; left: 50%; transform: translateX(-50%);
-      color: rgba(255, 255, 255, 0.55);
+      color: rgba(255, 255, 255, 0.88);
+      text-shadow: 0 1px 8px rgba(0,0,0,0.5);
       font-size: 13.5px;
       text-align: center;
       max-width: 420px;
@@ -768,11 +786,25 @@
     @media (prefers-reduced-motion: reduce) {
       .reveal { opacity: 1; transform: none; transition: none; }
       .hero-pill::before, .demo-hint, .arrow, .pulsedot { animation: none !important; }
+      .tray-menu { transition: none; }
+      .taskbar-icon { transition: none; }
+      .faq details, .faq summary::after { transition: none; }
+      .cta-primary, .cta-ghost { transition: none; }
+      a { transition: none; }
     }
 
     /* skip link */
     .skip { position: absolute; left: -9999px; }
     .skip:focus { left: 16px; top: 16px; padding: 8px 12px; background: var(--green); color: #052e16; border-radius: 6px; z-index: 100; }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
   </style>
 </head>
 <body>
@@ -799,16 +831,16 @@
     <header class="hero">
       <div class="wrap">
         <span class="hero-pill reveal">v0.3.7 · MIT · Windows 10/11</span>
-        <h1 class="reveal">Stay <span class="stripe">green.</span></h1>
+        <h1 class="reveal">Keep Teams <span class="stripe">green.</span></h1>
         <p class="hero-tag reveal">A friendly little tray app that quietly keeps your Microsoft Teams presence Available — and your machine awake — without leaving you parked on a fake screensaver.</p>
-        <div class="cta-row reveal">
-          <a class="cta-primary" href="https://github.com/calebohara/noidle.app/releases/latest/download/noidle.exe">
+        <div class="cta-row">
+          <a class="cta-primary" href="#try">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download for Windows
+            See how it works&nbsp;↓
           </a>
-          <a class="cta-ghost" href="#try">See the menu&nbsp;↓</a>
+          <a class="cta-ghost" href="https://github.com/calebohara/noidle.app/releases/latest/download/noidle.exe">Download for Windows</a>
         </div>
-        <p class="cta-meta reveal">
+        <p class="cta-meta">
           <a href="https://github.com/calebohara/noidle.app/releases/latest/download/noidle.msi">.msi installer</a>
           <span class="sep">·</span>
           <a href="https://github.com/calebohara/noidle.app/blob/main/SIGNING.md">verify signature</a>
@@ -819,10 +851,13 @@
     </header>
 
     <!-- The killer demo: interactive Windows 11 taskbar -->
-    <section id="try" class="demo-section">
+    <section id="try" class="demo-section" aria-label="Interactive demo">
       <div class="wrap">
+        <h2 class="visually-hidden">Interactive demo</h2>
         <div class="demo-prompt reveal">
-          <span class="arrow">↓</span> right-click the green dot in the taskbar to see the real menu
+          <span class="arrow">↓</span>
+          <span class="demo-prompt-desktop">Right-click the green dot to see the real menu</span>
+          <span class="demo-prompt-mobile">Tap the green dot to open the menu</span>
         </div>
 
         <div class="desktop reveal" aria-hidden="true">
@@ -869,8 +904,8 @@
               </div>
             </div>
             <div class="tray-clock">
-              <div class="time" id="taskbarTime">10:42 AM</div>
-              <div class="date" id="taskbarDate">Mon, May 4</div>
+              <div class="time" id="taskbarTime"></div>
+              <div class="date" id="taskbarDate"></div>
             </div>
 
             <!-- The hint that fades after first interaction -->
@@ -883,7 +918,7 @@
                 <span>Pause</span>
                 <div class="menu-tooltip">Toggle the loop. Also bound to <strong>Ctrl+Alt+Z</strong>.</div>
               </div>
-              <div class="menu-divider"></div>
+              <div class="menu-divider" role="separator"></div>
               <div class="menu-item" role="menuitem">
                 <span class="check"></span>
                 <span>Interval</span>
@@ -896,7 +931,7 @@
                 <span class="arrow">▸</span>
                 <div class="menu-tooltip">Mouse jitter, F15 keypress, or both.</div>
               </div>
-              <div class="menu-divider"></div>
+              <div class="menu-divider" role="separator"></div>
               <div class="menu-item" role="menuitem">
                 <span class="check">✓</span>
                 <span>Smart pause when active</span>
@@ -917,7 +952,7 @@
                 <span>Check for updates on launch</span>
                 <div class="menu-tooltip">Pings GitHub Releases — rate-limited to once every 6h.</div>
               </div>
-              <div class="menu-divider"></div>
+              <div class="menu-divider" role="separator"></div>
               <div class="menu-item" role="menuitem">
                 <span class="check"></span>
                 <span>Show stats</span>
@@ -930,7 +965,7 @@
                 <span class="check"></span>
                 <span>Open data folder</span>
               </div>
-              <div class="menu-divider"></div>
+              <div class="menu-divider" role="separator"></div>
               <div class="menu-item" role="menuitem" id="quitItem">
                 <span class="check"></span>
                 <span>Quit</span>
@@ -938,6 +973,7 @@
             </div>
           </div>
         </div>
+        <p class="visually-hidden">Interactive demonstration: a Windows 11 taskbar showing the noidle tray icon with a green presence dot. Right-clicking the icon opens the control menu.</p>
       </div>
     </section>
 
@@ -955,13 +991,13 @@
             <div class="visual"><span class="pulsedot"></span></div>
             <div class="num">01 · whisper</div>
             <h3>Tells Windows you're here</h3>
-            <p>A sub-pixel <code>SendInput</code> mouse nudge plus an invisible <kbd>F15</kbd> keypress. Nothing visible on screen. The OS counts both as activity.</p>
+            <p>A sub-pixel mouse nudge and an invisible keypress — nothing you'd see or feel. The OS registers both as user activity and resets the idle timer.</p>
           </div>
           <div class="cycle-step reveal">
             <div class="visual"><span class="moon"></span></div>
             <div class="num">02 · wakelock</div>
             <h3>Keeps the screen awake</h3>
-            <p>Pins the display and the system on via <code>SetThreadExecutionState</code> so you don't lose your work to a sleep timer mid-thought.</p>
+            <p>Tells Windows to keep the display and system awake — the same signal your video player sends. No changes to power settings. Reverts the instant you quit.</p>
           </div>
           <div class="cycle-step reveal">
             <div class="visual"><span class="check">✓</span></div>
@@ -974,12 +1010,12 @@
     </section>
 
     <!-- The What's New popup mockup -->
-    <section id="updates" class="popup-section">
+    <section id="updates" class="popup-section" aria-labelledby="updates-heading">
       <div class="wrap">
         <div class="popup-grid">
           <div class="popup-text reveal">
             <div class="section-eyebrow">When it's time to update</div>
-            <h2>A friendly popup with what actually changed.</h2>
+            <h2 id="updates-heading">A friendly popup with what actually changed.</h2>
             <p>noidle parses the GitHub release notes and shows you a real "What's New" window — categorized into <strong>Added</strong>, <strong>Fixed</strong>, <strong>Changed</strong>. No silent auto-installs. No nagging.</p>
             <ul class="features">
               <li>Three explicit choices — Download, Remind me later, Skip this version</li>
@@ -1048,10 +1084,10 @@
           <div class="panel bad reveal">
             <h3>It can't help when… <span class="badge">honest no</span></h3>
             <ul>
-              <li><strong>Your laptop is locked</strong> (Win+L). Teams marks you Away regardless of input. By OS design.</li>
+              <li><strong>You're on a disconnected RDP session.</strong></li>
               <li><strong>Outlook says you're in a meeting</strong>. Calendar status takes precedence over presence.</li>
               <li><strong>You're on a managed work device</strong> with corporate monitoring (CrowdStrike, Sentinel, Teramind, ActivTrak — they detect synthetic input). Don't run noidle there without permission.</li>
-              <li><strong>You're on a disconnected RDP session.</strong></li>
+              <li><strong>Your laptop is locked</strong> (Win+L). Teams marks you Away regardless of input. By OS design.</li>
             </ul>
           </div>
         </div>
@@ -1112,6 +1148,23 @@
         </div>
       </div>
     </section>
+
+    <section class="reveal" style="text-align:center; padding: 80px 0; border-top: 1px solid var(--line);">
+      <div class="wrap">
+        <p class="section-eyebrow">Ready?</p>
+        <h2 style="margin: 0 auto 18px; max-width: 520px;">Free download. Lives in your tray. Gone in one click if you change your mind.</h2>
+        <div class="cta-row" style="justify-content:center; margin-top: 28px;">
+          <a class="cta-primary" href="https://github.com/calebohara/noidle.app/releases/latest/download/noidle.exe">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1v9M4 7l4 4 4-4M2 13h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Download for Windows
+          </a>
+          <a class="cta-ghost" href="https://github.com/calebohara/noidle.app/releases/latest/download/noidle.msi">
+            .msi installer
+          </a>
+        </div>
+        <p class="cta-meta" style="margin-top: 14px;">MIT · no telemetry · ~15 MB · <a href="SIGNING.md">signed &amp; verifiable</a></p>
+      </div>
+    </section>
   </main>
 
   <footer>
@@ -1159,8 +1212,11 @@
         el.textContent = `${h}:${m} ${am}`;
         if (dateEl) dateEl.textContent = `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
       }
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       tick();
-      setInterval(tick, 60000);
+      if (!reducedMotion) {
+        setInterval(tick, 60000);
+      }
     })();
 
     // ----- Tray icon right-click menu -----

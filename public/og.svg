@@ -7,8 +7,9 @@
     </radialGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#g)"/>
-  <circle cx="960" cy="250" r="110" fill="#22c55e"/>
+  <circle cx="1090" cy="120" r="32" fill="#22c55e" opacity="0.9"/>
+  <circle cx="1090" cy="120" r="56" fill="#22c55e" opacity="0.12"/>
   <text x="110" y="280" font-family="Inter,sans-serif" font-size="130" font-weight="800" fill="#ffffff">stay green.</text>
   <text x="114" y="370" font-family="Inter,sans-serif" font-size="34" fill="#a3a3aa">noidle.app — a friendly Windows tray app</text>
-  <text x="114" y="560" font-family="JetBrains Mono,monospace" font-size="22" fill="#71717a">$ noidle.exe&#160;&#160;//&#160;mit&#160;//&#160;no telemetry</text>
+  <text x="114" y="560" font-family="JetBrains Mono,monospace" font-size="22" fill="#a3a3aa">$ noidle.exe&#160;&#160;//&#160;mit&#160;//&#160;no telemetry</text>
 </svg>
