@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
   <Package
       Name="noidle.app"
       Manufacturer="noidle.app"
@@ -9,9 +12,62 @@
       Compressed="yes"
       InstallerVersion="500">
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <!-- Schedule afterInstallExecute so new files land before old ones are
+         removed, which is safer if the EXE was running and got replaced. -->
+    <MajorUpgrade Schedule="afterInstallExecute"
+                  DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
+    <!-- ARP (Add/Remove Programs) metadata. -->
+    <Icon Id="noidle.ico" SourceFile="assets/icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="noidle.ico" />
+    <Property Id="ARPHELPLINK" Value="https://noidle.app" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/calebohara/noidle.app" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://github.com/calebohara/noidle.app/releases/latest" />
+    <Property Id="ARPCONTACT" Value="caleb.ohara@gmail.com" />
+    <Property Id="ARPCOMMENTS" Value="Keeps your status active. Lives in your tray." />
+    <Property Id="ARPNOMODIFY" Value="1" />
+
+    <!-- Gracefully close a running noidle.exe before overwriting it.
+         CloseMessage=yes sends WM_CLOSE; the EXE's tray-icon handler exits
+         cleanly. We do NOT TerminateProcess (would lose unsaved state). -->
+    <util:CloseApplication Id="CloseNoidleExe"
+                           Target="noidle.exe"
+                           CloseMessage="yes"
+                           RebootPrompt="no"
+                           TerminateProcess="0"
+                           PromptToContinue="yes" />
+
+    <!-- ============================================================
+         UI: WixUI_FeatureTree gives Welcome > License > FeatureTree
+         (single Main feature) > Verify > Progress > Finish (with
+         launch checkbox). The Autostart / Desktop-shortcut toggles
+         are driven by properties (overridable via msiexec) — see
+         INSTALLAUTOSTART / INSTALLDESKTOPSHORTCUT below.
+         ============================================================ -->
+    <ui:WixUI Id="WixUI_FeatureTree" InstallDirectory="INSTALLFOLDER" />
+    <WixVariable Id="WixUILicenseRtf" Value="installer/LICENSE.rtf" />
+
+    <!-- Finish-dialog "Launch noidle.app" checkbox.
+         WIXUI_EXITDIALOGOPTIONALCHECKBOX=1 makes it visible & ticked by default.
+         WixUI_FeatureTree wires the "LaunchApplication" custom action
+         (which calls WixShellExec on WixShellExecTarget) automatically
+         when these three properties are present. -->
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch noidle.app" />
+    <Property Id="WixShellExecTarget" Value="[#NoidleExe]" />
+
+    <!-- Gating properties for the two optional components. Names locked in
+         with release-pipeline for the /qn smoke-test invocation:
+           INSTALLAUTOSTART=0       suppresses the HKCU Run key
+           INSTALLDESKTOPSHORTCUT=1 enables the desktop shortcut
+         Secure="yes" lets msiexec override these from the command line. -->
+    <Property Id="INSTALLAUTOSTART" Value="1" Secure="yes" />
+    <Property Id="INSTALLDESKTOPSHORTCUT" Value="0" Secure="yes" />
+
+    <!-- ============================================================
+         Directory tree: %LOCALAPPDATA%\Programs\noidle\
+         ============================================================ -->
     <StandardDirectory Id="LocalAppDataFolder">
       <Directory Id="ProgramsFolder" Name="Programs">
         <Directory Id="INSTALLFOLDER" Name="noidle" />
@@ -22,6 +78,13 @@
       <Directory Id="ApplicationProgramsFolder" Name="noidle.app" />
     </StandardDirectory>
 
+    <StandardDirectory Id="DesktopFolder" />
+
+    <!-- ============================================================
+         Components
+         ============================================================ -->
+
+    <!-- Main executable. Stable GUID (was already stable in the previous file). -->
     <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="2bd1f1a7-91f2-4f3c-9c0a-1d3e7c5b6a40">
       <File Id="NoidleExe"
             Source="dist/noidle.exe"
@@ -34,6 +97,7 @@
       <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
     </Component>
 
+    <!-- Start Menu shortcut. Stable GUID from the previous file. -->
     <Component Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Guid="9f6e8a44-2b1c-4f87-bb3d-5a8c0e9d1c22">
       <Shortcut Id="NoidleShortcut"
                 Name="noidle.app"
@@ -49,9 +113,52 @@
                      KeyPath="yes" />
     </Component>
 
-    <Feature Id="Main" Title="noidle.app" Level="1">
+    <!-- Autostart (HKCU Run key). Property-gated: only installed when
+         INSTALLAUTOSTART=1. MSI tracks what was installed, so on uninstall
+         the Run key is removed only if it was actually written — no orphan. -->
+    <Component Id="AutostartRegKey" Directory="INSTALLFOLDER" Guid="3e7b9c12-5f48-4a2d-8e91-6b4f0c1d7a83">
+      <Condition>INSTALLAUTOSTART = "1"</Condition>
+      <RegistryValue Root="HKCU"
+                     Key="Software\Microsoft\Windows\CurrentVersion\Run"
+                     Name="noidle"
+                     Type="string"
+                     Value="[INSTALLFOLDER]noidle.exe"
+                     KeyPath="yes" />
+    </Component>
+
+    <!-- Desktop shortcut. Property-gated: only installed when
+         INSTALLDESKTOPSHORTCUT=1. Default is 0 (opt-in). -->
+    <Component Id="DesktopShortcut" Directory="DesktopFolder" Guid="b5d2e0c4-9a36-4f1b-aa78-2c5e7d9f0146">
+      <Condition>INSTALLDESKTOPSHORTCUT = "1"</Condition>
+      <Shortcut Id="NoidleDesktopShortcut"
+                Name="noidle.app"
+                Description="Stay active. Stay available."
+                Target="[INSTALLFOLDER]noidle.exe"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RegistryValue Root="HKCU"
+                     Key="Software\noidle"
+                     Name="desktop_shortcut"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+
+    <!-- ============================================================
+         Single feature — optional components are property-gated above.
+         FeatureTree UI still gives a clean "what's being installed"
+         summary, but install decisions live in INSTALLAUTOSTART /
+         INSTALLDESKTOPSHORTCUT (overridable via msiexec PROP=VALUE).
+         ============================================================ -->
+    <Feature Id="Main"
+             Title="noidle.app"
+             Description="The noidle.app tray utility — stays in your system tray and keeps your status active."
+             Level="1"
+             AllowAbsent="no">
       <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="AutostartRegKey" />
+      <ComponentRef Id="DesktopShortcut" />
     </Feature>
+
   </Package>
 </Wix>

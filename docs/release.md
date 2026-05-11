@@ -3,15 +3,21 @@
 ## Cutting a release
 
 1. Bump the version in `pyproject.toml` (and anywhere else it lives).
-2. Commit and push to `main`.
-3. Tag and push:
+2. Run a manual MSI spot-check. Build locally (or pull the artifact from
+   a `workflow_dispatch` run), then install `noidle.msi` on a real
+   Windows box: walk through the installer UI, confirm the ARP entry
+   appears in Settings → Apps, launch from Start Menu, and uninstall.
+   CI smokes this headlessly but a real GUI pass once per release
+   catches anything the silent install misses.
+3. Commit and push to `main`.
+4. Tag and push:
 
    ```bash
    git tag v0.1.0
    git push --tags
    ```
 
-4. Watch the `build` workflow in GitHub Actions. On a `v*` tag it will:
+5. Watch the `build` workflow in GitHub Actions. On a `v*` tag it will:
    - Build `noidle.exe` on `windows-latest` with PyInstaller
    - Upload the binary as a workflow artifact
    - Create a GitHub Release and attach `noidle.exe`

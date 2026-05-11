@@ -102,16 +102,163 @@ jobs:
         shell: pwsh
         run: dotnet tool install --global wix --version 4.0.5
 
+      - name: Install WiX extensions
+        # Version pin must track the WiX 4.0.5 toolset above. The .wxs
+        # uses elements from WixToolset.UI.wixext (WixUI dialogs) and
+        # WixToolset.Util.wixext (e.g. Util:RemoveFolderEx, registry
+        # search helpers). `-g` installs them into the global tool
+        # cache so `wix build` can resolve `-ext <name>` below.
+        shell: pwsh
+        run: |
+          wix extension add -g WixToolset.UI.wixext/4.0.5
+          wix extension add -g WixToolset.Util.wixext/4.0.5
+
       - name: Build MSI
         shell: pwsh
         run: |
           $version = "${{ steps.msi_version.outputs.version }}"
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          wix build installer/noidle.wxs -arch x64 -out dist/noidle.msi -d Version=$version
+          wix build installer/noidle.wxs -arch x64 -out dist/noidle.msi -d Version=$version `
+            -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext
           if (-not (Test-Path "dist/noidle.msi")) {
             Write-Error "WiX did not produce dist/noidle.msi"
             exit 1
           }
+
+      - name: Smoke-test MSI install/uninstall
+        # Silent install/uninstall round-trip on the runner. Confirms the
+        # MSI lays down its expected artifacts (exe, Start Menu shortcut,
+        # installed flag, ARP entry) and removes them cleanly. Also
+        # verifies the INSTALLAUTOSTART=0 gating works (Run key NOT created).
+        # Property names match installer/noidle.wxs:
+        #   WIXUI_EXITDIALOGOPTIONALCHECKBOX=0  suppress launch-after-install
+        #   INSTALLAUTOSTART=0                  suppress HKCU Run key
+        #   INSTALLDESKTOPSHORTCUT=0            suppress desktop shortcut (already default)
+        # perUser MSI — DO NOT elevate; run as the regular runner user.
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $msi = "dist\noidle.msi"
+          $installLog = "dist\msi-install.log"
+          $uninstallLog = "dist\msi-uninstall.log"
+
+          if (-not (Test-Path $msi)) { Write-Error "MSI missing at $msi"; exit 1 }
+
+          # ---- install ----
+          Write-Host "Installing $msi silently..."
+          $p = Start-Process -FilePath msiexec.exe `
+            -ArgumentList "/i", $msi, "/qn", "/l*v", $installLog, `
+              "WIXUI_EXITDIALOGOPTIONALCHECKBOX=0", "INSTALLAUTOSTART=0", "INSTALLDESKTOPSHORTCUT=0" `
+            -Wait -PassThru
+          Write-Host "msiexec /i exit code: $($p.ExitCode)"
+          if ($p.ExitCode -ne 0) {
+            Write-Error "MSI install failed (exit $($p.ExitCode))"
+            if (Test-Path $installLog) { Get-Content $installLog }
+            exit 1
+          }
+
+          # ---- verify install artifacts ----
+          $installedExe = Join-Path $env:LOCALAPPDATA "Programs\noidle\noidle.exe"
+          if (-not (Test-Path $installedExe)) {
+            Write-Error "Expected install path missing: $installedExe"
+            if (Test-Path $installLog) { Get-Content $installLog }
+            exit 1
+          }
+          Write-Host "Found installed exe: $installedExe"
+
+          $startMenuLnk = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\noidle.app\noidle.app.lnk"
+          if (-not (Test-Path $startMenuLnk)) {
+            Write-Error "Expected Start Menu shortcut missing: $startMenuLnk"
+            if (Test-Path $installLog) { Get-Content $installLog }
+            exit 1
+          }
+          Write-Host "Found Start Menu shortcut: $startMenuLnk"
+
+          # Installed-flag DWORD set by the MainExecutable component.
+          $installedFlag = Get-ItemProperty -Path "HKCU:\Software\noidle" -Name "installed" -ErrorAction SilentlyContinue
+          if (-not $installedFlag -or $installedFlag.installed -ne 1) {
+            Write-Error "HKCU\Software\noidle\installed not set to 1 (got: $($installedFlag.installed))"
+            if (Test-Path $installLog) { Get-Content $installLog }
+            exit 1
+          }
+          Write-Host "Found HKCU\Software\noidle\installed = 1"
+
+          # Autostart Run key — we passed INSTALLAUTOSTART=0, so the
+          # <Condition> on the AutostartRegKey component should suppress it.
+          # Verifying its ABSENCE here is what proves the gate property works.
+          $runKey = Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "noidle" -ErrorAction SilentlyContinue
+          if ($runKey) {
+            Write-Error "Autostart entry HKCU\...\Run\noidle was created despite INSTALLAUTOSTART=0"
+            if (Test-Path $installLog) { Get-Content $installLog }
+            exit 1
+          }
+          Write-Host "Confirmed autostart entry absent (INSTALLAUTOSTART=0 gate works)"
+
+          # ARP entry — perUser installs land in HKCU. ProductCode varies
+          # per build, so iterate subkeys and match on DisplayName prefix.
+          $arpRoot = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
+          $arp = Get-ChildItem $arpRoot -ErrorAction SilentlyContinue |
+            ForEach-Object { Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue } |
+            Where-Object { $_.DisplayName -and $_.DisplayName -like 'noidle*' } |
+            Select-Object -First 1
+          if (-not $arp) {
+            Write-Error "No ARP (Uninstall) entry found with DisplayName starting 'noidle' under $arpRoot"
+            if (Test-Path $installLog) { Get-Content $installLog }
+            exit 1
+          }
+          Write-Host "ARP DisplayName:    $($arp.DisplayName)"
+          Write-Host "ARP DisplayVersion: $($arp.DisplayVersion)"
+          Write-Host "ARP Publisher:      $($arp.Publisher)"
+          Write-Host "ARP URLInfoAbout:   $($arp.URLInfoAbout)"
+          foreach ($field in 'DisplayName','DisplayVersion','Publisher') {
+            if (-not $arp.$field) {
+              Write-Error "ARP entry missing required field: $field"
+              if (Test-Path $installLog) { Get-Content $installLog }
+              exit 1
+            }
+          }
+
+          # ---- uninstall ----
+          Write-Host "Uninstalling $msi silently..."
+          $p2 = Start-Process -FilePath msiexec.exe `
+            -ArgumentList "/x", $msi, "/qn", "/l*v", $uninstallLog `
+            -Wait -PassThru
+          Write-Host "msiexec /x exit code: $($p2.ExitCode)"
+          if ($p2.ExitCode -ne 0) {
+            Write-Error "MSI uninstall failed (exit $($p2.ExitCode))"
+            if (Test-Path $uninstallLog) { Get-Content $uninstallLog }
+            exit 1
+          }
+
+          # ---- verify cleanup ----
+          if (Test-Path $installedExe) {
+            Write-Error "Install path still present after uninstall: $installedExe"
+            if (Test-Path $uninstallLog) { Get-Content $uninstallLog }
+            exit 1
+          }
+          $startMenuDir = Split-Path $startMenuLnk -Parent
+          if (Test-Path $startMenuDir) {
+            Write-Error "Start Menu folder still present after uninstall: $startMenuDir"
+            if (Test-Path $uninstallLog) { Get-Content $uninstallLog }
+            exit 1
+          }
+          $installedFlagAfter = Get-ItemProperty -Path "HKCU:\Software\noidle" -Name "installed" -ErrorAction SilentlyContinue
+          if ($installedFlagAfter) {
+            Write-Error "HKCU\Software\noidle\installed still present after uninstall"
+            if (Test-Path $uninstallLog) { Get-Content $uninstallLog }
+            exit 1
+          }
+          Write-Host "MSI install/uninstall smoke test passed."
+
+      - name: Upload MSI logs on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: msi-logs
+          path: |
+            dist/msi-install.log
+            dist/msi-uninstall.log
+          if-no-files-found: ignore
 
       - name: Generate SHA256SUMS
         # Standalone checksums file users can verify with `Get-FileHash`

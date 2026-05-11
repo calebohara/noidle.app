@@ -48,6 +48,9 @@ GitHub Releases page, but cryptographically anchored in
 [Rekor](https://rekor.sigstore.dev/) so it can't be silently swapped
 later.
 
+The `.msi` installer is signed the same way. Substitute `noidle.msi`,
+`noidle.msi.pem`, and `noidle.msi.sig` in the command above.
+
 ## Status
 
 | Layer | Status | Effect |
