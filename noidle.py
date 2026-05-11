@@ -141,16 +141,29 @@ def _smoke() -> int:
 
     Uses explicit if/raise instead of bare assert so python -O cannot
     silently strip the checks and return a false-positive exit 0.
+
+    Set NOIDLE_SMOKE_TRACE=1 in the env to print a marker before/after
+    each import. Useful for CI: when a build hangs silently, the trace
+    pinpoints which import didn't complete instead of leaving us with
+    empty stdout. Off by default so dev runs stay quiet.
     """
     import importlib
 
+    trace = bool(os.environ.get("NOIDLE_SMOKE_TRACE"))
+    if trace:
+        print("smoke: start", flush=True)
+
     # Discover and import every noidle.* submodule.
     for name in _enumerate_noidle_modules():
+        if trace:
+            print(f"smoke: importing {name}", flush=True)
         try:
             importlib.import_module(name)
         except Exception as exc:
             print(f"smoke FAIL: cannot import {name}: {exc!r}", flush=True)
             return 4
+    if trace:
+        print("smoke: imports done", flush=True)
 
     import noidle.config
     import noidle.hotkey

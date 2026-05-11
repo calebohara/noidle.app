@@ -46,6 +46,25 @@ jobs:
         # pkgutil.iter_modules to mirror the same discovery).
         run: pyinstaller --onefile --noconsole --name noidle --icon assets/icon.ico --add-data "assets;assets" --paths src --collect-submodules noidle noidle.py
 
+      - name: Exclude dist/ + TEMP from Defender (silent hang fix)
+        # Run 7888659 produced 120s of empty stdout/stderr from the smoke
+        # .exe: classic signature of Defender real-time scanning blocking
+        # an unsigned PyInstaller --onefile bootloader. The bootloader
+        # extracts the bundled Python to %TEMP%\_MEI<pid>; AmsiScan on
+        # Win Server 2025 runners can stall extraction silently. Exclude
+        # both paths so the bootloader can run. Best-effort: we keep
+        # going if Add-MpPreference is unavailable.
+        shell: pwsh
+        run: |
+          foreach ($path in @("$pwd\dist", $env:TEMP)) {
+            try {
+              Add-MpPreference -ExclusionPath $path -ErrorAction Stop
+              Write-Host "Defender exclusion added: $path"
+            } catch {
+              Write-Host "Warning: could not exclude $path from Defender: $_"
+            }
+          }
+
       - name: Smoke-test built .exe (--smoke imports everything and exits 0)
         # --noconsole strips stdout from the .exe; we ALSO build a console
         # shim ("noidle-debug.exe") so a smoke failure produces a real
@@ -59,6 +78,15 @@ jobs:
         # below so we get logs instead of an empty cancellation.
         timeout-minutes: 10
         shell: pwsh
+        env:
+          # Force unbuffered stdout/stderr inside the bundled Python so
+          # we don't lose diagnostic prints when we kill a hung process.
+          PYTHONUNBUFFERED: "1"
+          # Enable per-import tracing in _smoke() so if it still hangs
+          # after the Defender exclusion, the log tells us which module
+          # didn't complete its import (vs. the previous "completely
+          # silent" failure mode).
+          NOIDLE_SMOKE_TRACE: "1"
         run: |
           $ErrorActionPreference = "Stop"
           $exe = "dist/noidle.exe"
@@ -84,6 +112,21 @@ jobs:
               if (Test-Path $outFile) { Get-Content $outFile }
               Write-Host "--- $label stderr (partial, process hung) ---"
               if (Test-Path $errFile) { Get-Content $errFile }
+              # On a silent hang, the most useful evidence is whether
+              # the PyInstaller bootloader ever extracted (proves Python
+              # at least started) vs. nothing at all (bootloader itself
+              # blocked, almost always by AV scanning an unsigned exe).
+              Write-Host "--- PyInstaller _MEI* extraction dirs ---"
+              Get-ChildItem $env:TEMP -Directory -Filter '_MEI*' -ErrorAction SilentlyContinue |
+                Format-Table FullName, LastWriteTime -AutoSize | Out-String | Write-Host
+              Write-Host "--- Recent Defender events (last 10 min) ---"
+              try {
+                Get-WinEvent -LogName 'Microsoft-Windows-Windows Defender/Operational' `
+                  -MaxEvents 20 -ErrorAction Stop |
+                  Where-Object { $_.TimeCreated -gt (Get-Date).AddMinutes(-10) } |
+                  Format-Table TimeCreated, Id, LevelDisplayName, Message -AutoSize |
+                  Out-String | Write-Host
+              } catch { Write-Host "(Defender event log unavailable: $_)" }
               Write-Error "$path --smoke hung past 120s. Refusing to publish."
               exit 1
             }
