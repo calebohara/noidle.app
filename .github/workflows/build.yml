@@ -79,6 +79,7 @@ jobs:
             --collect-submodules tkinter `
             --collect-submodules collections `
             --collect-submodules packaging `
+            --collect-all pystray `
             --hidden-import ctypes.wintypes `
             --hidden-import json `
             --hidden-import re `
@@ -150,6 +151,7 @@ jobs:
             --collect-submodules tkinter `
             --collect-submodules collections `
             --collect-submodules packaging `
+            --collect-all pystray `
             --hidden-import ctypes.wintypes `
             --hidden-import json `
             --hidden-import re `
