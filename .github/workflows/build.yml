@@ -91,6 +91,7 @@ jobs:
             --hidden-import atexit `
             --hidden-import signal `
             --hidden-import importlib `
+            --hidden-import logging.handlers `
             _pyi_entry.py
 
       - name: Exclude dist/ + TEMP from Defender (silent hang fix)
@@ -161,6 +162,7 @@ jobs:
             --hidden-import atexit `
             --hidden-import signal `
             --hidden-import importlib `
+            --hidden-import logging.handlers `
             _pyi_entry.py
           $dbg = "dist/noidle-debug.exe"
           if (-not (Test-Path $dbg)) { Write-Error "Debug exe build failed"; exit 1 }
