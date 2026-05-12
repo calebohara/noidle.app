@@ -62,29 +62,33 @@ jobs:
         shell: pwsh
         run: |
           Copy-Item noidle.py _pyi_entry.py -Force
-          # Force PyInstaller's analyzer to walk the noidle package's full
-          # transitive import graph. The real entry script lazy-imports
-          # noidle.tray inside main(), and run 25704350432 proved the
-          # analyzer doesn't follow that chain — config.py's `import json`
-          # got missed → ModuleNotFoundError at runtime. Appending module-
-          # level imports here makes each submodule's deps reachable from
-          # the analyzed graph. Build-only; the real noidle.py is untouched.
-          @"
-
-          # --- PyInstaller analyzer hints (appended at build time only) ---
-          import noidle.activity        # noqa: F401, E402
-          import noidle.autostart       # noqa: F401, E402
-          import noidle.config          # noqa: F401, E402
-          import noidle.engine          # noqa: F401, E402
-          import noidle.hotkey          # noqa: F401, E402
-          import noidle.logging_setup   # noqa: F401, E402
-          import noidle.stats           # noqa: F401, E402
-          import noidle.tray            # noqa: F401, E402
-          import noidle.updater         # noqa: F401, E402
-          import noidle.whats_new       # noqa: F401, E402
-          import noidle.winapi          # noqa: F401, E402
-          "@ | Add-Content _pyi_entry.py
-          pyinstaller --onefile --noconsole --name noidle --icon assets/icon.ico --add-data "assets;assets" --add-data "src;src" --paths src --collect-submodules noidle _pyi_entry.py
+          # Belt + braces: also explicitly list every stdlib module the
+          # noidle package transitively needs as --hidden-import. Run 63ec1dc
+          # showed PyInstaller's analyzer still missed json after every other
+          # attempt (renaming the entry, --add-data src;src, even appending
+          # module-level `import noidle.X` lines to _pyi_entry.py). These
+          # flags force inclusion regardless of what the analyzer figures out.
+          # Empirically derived from `grep "^import \|^from " src/noidle/*.py`
+          # plus inside-function imports (tkinter in whats_new, tomllib +
+          # inspect in noidle.py). Update when adding new stdlib deps.
+          pyinstaller --onefile --noconsole --name noidle --icon assets/icon.ico `
+            --add-data "assets;assets" --add-data "src;src" --paths src `
+            --collect-submodules noidle `
+            --hidden-import json `
+            --hidden-import re `
+            --hidden-import dataclasses `
+            --hidden-import urllib `
+            --hidden-import urllib.request `
+            --hidden-import urllib.error `
+            --hidden-import urllib.parse `
+            --hidden-import subprocess `
+            --hidden-import webbrowser `
+            --hidden-import random `
+            --hidden-import tkinter `
+            --hidden-import tkinter.ttk `
+            --hidden-import tomllib `
+            --hidden-import inspect `
+            _pyi_entry.py
 
       - name: Exclude dist/ + TEMP from Defender (silent hang fix)
         # Run 7888659 produced 120s of empty stdout/stderr from the smoke
@@ -133,11 +137,25 @@ jobs:
           if (-not (Test-Path $exe)) { Write-Error "Build produced no exe"; exit 1 }
 
           # Build a parallel console-mode exe purely for capturing smoke output.
-          # Mirrors the main build's renamed entry + --add-data "src;src":
-          # using noidle.py as the entry filename triggers a name-collision
-          # with the noidle package at analysis time, dropping transitive
-          # stdlib imports (json, etc.) from the bundle.
-          pyinstaller --onefile --console --name noidle-debug --add-data "src;src" --paths src --collect-submodules noidle _pyi_entry.py
+          # Hidden-imports list mirrors the main build above; keep in sync.
+          pyinstaller --onefile --console --name noidle-debug `
+            --add-data "src;src" --paths src `
+            --collect-submodules noidle `
+            --hidden-import json `
+            --hidden-import re `
+            --hidden-import dataclasses `
+            --hidden-import urllib `
+            --hidden-import urllib.request `
+            --hidden-import urllib.error `
+            --hidden-import urllib.parse `
+            --hidden-import subprocess `
+            --hidden-import webbrowser `
+            --hidden-import random `
+            --hidden-import tkinter `
+            --hidden-import tkinter.ttk `
+            --hidden-import tomllib `
+            --hidden-import inspect `
+            _pyi_entry.py
           $dbg = "dist/noidle-debug.exe"
           if (-not (Test-Path $dbg)) { Write-Error "Debug exe build failed"; exit 1 }
 
